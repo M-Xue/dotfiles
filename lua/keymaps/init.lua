@@ -32,4 +32,3 @@ vim.keymap.set(
 require("keymaps.git")
 require("keymaps.navigation")
 require("keymaps.harpoon")
-require("keymaps.ai")

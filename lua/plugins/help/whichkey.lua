@@ -12,7 +12,6 @@ return {
 				{ "<leader>s", group = "Window" },
 				{ "<leader>k", group = "Tab" },
 				{ "<leader>h", group = "Git" },
-				{ "<leader>a", group = "AI" },
 				{ "<leader>y", group = "File Tree" },
 				-- { "<leader>d", group = "Debug" },
 				-- { "<leader>m", group = "Marks" },

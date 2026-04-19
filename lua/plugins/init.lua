@@ -23,8 +23,6 @@ local plugins = {
 	require("plugins.formatter"),
 	require("plugins.linter"),
 
-	require("plugins.ai"),
-
 	require("plugins.trouble"),
 	require("plugins.harpoon"),
 	require("plugins.numb"),
