@@ -4,14 +4,20 @@ Nvim Clean Uptodo
 
 fix treesitter error 
 fix copilot
-
-===========================================
+fix snacks picker and treeview 
+- add tmux bindings to cheatsheet
+- add snacks nvim bindings for picker adn explore to chearsheet
+add pretty ts errors
 
 fix linter and formatter 
 
 fix start up times
 - do at work
 - use snacks nvim profiler
+
+remove ai
+
+update blimk cmp and stop making it open right after i accept something
 
 ===========================================
 

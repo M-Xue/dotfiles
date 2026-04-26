@@ -50,9 +50,10 @@ return {
 						focus = "list",
 						auto_close = true,
 						layout = "float",
+						hidden = true,
 					},
 
-					files = {},
+					files = { hidden = true },
 					buffers = {},
 					registers = { layout = "float", focus = "input" },
 					lines = { layout = "float", focus = "input" },
