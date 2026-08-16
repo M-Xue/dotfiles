@@ -10,7 +10,7 @@ local source_icons = {
 
 return {
 	"saghen/blink.cmp",
-	event = "InsertEnter",
+	lazy = false,
 	dependencies = {
 		{
 			"L3MON4D3/LuaSnip",
@@ -48,6 +48,12 @@ return {
 			-- kind_icons = icons,
 		},
 		completion = {
+			trigger = {
+				show_on_insert = false,
+				show_on_accept_on_trigger_character = false,
+				show_on_insert_on_trigger_character = false,
+				show_on_blocked_trigger_characters = { " ", "\n", "\t", "(", "[", "{" },
+			},
 			documentation = { auto_show = true },
 			menu = {
 				draw = {

@@ -25,12 +25,11 @@ end
 
 local function configure_lsp()
 	local capabilities = require("blink.cmp").get_lsp_capabilities()
-	local wk = require("which-key")
-	local navic = require("nvim-navic")
 
 	-- This function is used for passing in information about the LSP client after
 	-- it attaches to a buffer.
 	local on_attach = function(client, bufnr)
+		local wk = require("which-key")
 		wk.add({
 			{ "<leader>e", group = "Diagnostics" },
 			{ "<leader>g", group = "LSP" },
@@ -38,6 +37,7 @@ local function configure_lsp()
 		require("plugins.lsp.keymaps").init_lsp_keymaps(bufnr)
 		require("plugins.lsp.keymaps").init_diagnostics_keymaps(bufnr)
 
+		local navic = require("nvim-navic")
 		if client.supports_method("textDocument/documentSymbol") then
 			navic.attach(client, bufnr)
 		end
@@ -52,11 +52,14 @@ end
 return {
 	{
 		"neovim/nvim-lspconfig",
-		event = "VeryLazy",
+		lazy = false,
 		config = function()
 			configure_diagnostics()
 			configure_lsp()
 		end,
+		dependencies = {
+			"saghen/blink.cmp",
+		},
 	},
 	require("plugins.lsp.plugins"),
 }

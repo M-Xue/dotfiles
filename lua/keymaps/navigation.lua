@@ -19,8 +19,12 @@ vim.keymap.set("n", "<leader>fm", function()
 	Snacks.picker.marks()
 end, { desc = "Search marks" })
 
-vim.keymap.set("n", "<leader>fg", function()
+vim.keymap.set("n", "<leader>fG", function()
 	Snacks.picker.grep()
+end, { desc = "Grep" })
+
+vim.keymap.set("n", "<leader>fg", function()
+	Snacks.picker.git_status()
 end, { desc = "Grep" })
 
 -- File tree

@@ -2,31 +2,29 @@
 Nvim Clean Uptodo
 ==================================================
 
-fix treesitter error 
-fix copilot
+
+need a better terminal manager
+have the terminal buffers on the side
+can easily switch between terminal buffers
+can rename terminal buffers
+combine toggleterm with snacks.picker
+
+fix the selection logic in the picker
+- select with movement. move to qfl with shortcut. enter is on current selection
 fix snacks picker and treeview 
-- add tmux bindings to cheatsheet
-- add snacks nvim bindings for picker adn explore to chearsheet
-add pretty ts errors
-
-fix linter and formatter 
-
-fix start up times
-- do at work
-- use snacks nvim profiler
-
-remove ai
-
-update blimk cmp and stop making it open right after i accept something
-
-===========================================
-
 trouble qfl 
 - file picker with snacks integration
 
-===========================================
+add tmux shortcuts to the cheatsheet
+add how to show hidden files in file explorer
+- add tmux bindings to cheatsheet
+- add snacks nvim bindings for picker adn explore to chearsheet
 
-Augment AI  
+marks
+
+debugger
+
+===========================================
 
 - cheatsheet has comment keymap
 - diffview 
@@ -35,10 +33,6 @@ Augment AI
     - accept income keymap 
     - accept current keymap
     - next diff keymap
-
-for lualine: 
-- lsp
-https://github.com/AndreM222/copilot-lualine
 
 ==================================================
 
