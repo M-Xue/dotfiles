@@ -2,13 +2,6 @@
 Nvim Clean Uptodo
 ==================================================
 
-
-need a better terminal manager
-have the terminal buffers on the side
-can easily switch between terminal buffers
-can rename terminal buffers
-combine toggleterm with snacks.picker
-
 fix the selection logic in the picker
 - select with movement. move to qfl with shortcut. enter is on current selection
 fix snacks picker and treeview 
