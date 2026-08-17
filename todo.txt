@@ -2,11 +2,9 @@
 Nvim Clean Uptodo
 ==================================================
 
-fix the selection logic in the picker
-- select with movement. move to qfl with shortcut. enter is on current selection
-fix snacks picker and treeview 
-trouble qfl 
-- file picker with snacks integration
+manage qfl natively 
+- add shortcuts to cheetsheet
+open qfl with trouble
 
 add tmux shortcuts to the cheatsheet
 add how to show hidden files in file explorer
