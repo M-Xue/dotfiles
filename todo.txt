@@ -13,8 +13,6 @@ add how to show hidden files in file explorer
 - add tmux bindings to cheatsheet
 - add snacks nvim bindings for picker adn explore to chearsheet
 
-marks
-
 debugger
 
 ===========================================

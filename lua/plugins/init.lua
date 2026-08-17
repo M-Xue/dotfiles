@@ -26,6 +26,7 @@ local plugins = {
 	require("plugins.terminal"),
 
 	require("plugins.trouble"),
+	require("plugins.marks"),
 	require("plugins.harpoon"),
 	require("plugins.numb"),
 

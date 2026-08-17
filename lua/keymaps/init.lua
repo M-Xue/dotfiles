@@ -30,6 +30,7 @@ vim.keymap.set(
 -- g: LSP
 -- e: Diagnostics
 require("keymaps.git")
+require("keymaps.marks")
 require("keymaps.navigation")
 require("keymaps.harpoon")
 require("keymaps.terminal")

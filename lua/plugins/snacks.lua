@@ -58,7 +58,12 @@ return {
 					registers = { layout = "float", focus = "input" },
 					lines = { layout = "float", focus = "input" },
 					marks = {
-						global = false,
+						global = true,
+						transform = function(item)
+							if not item.label or not item.label:match("^[a-zA-Z]$") then
+								return false
+							end
+						end,
 					},
 					grep = {},
 
