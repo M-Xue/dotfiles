@@ -29,7 +29,7 @@ return {
 			dashboard.section.buttons.val = {
 				dashboard.button("f", "󰈞   Find file", ":lua Snacks.picker.files()<cr>"),
 				dashboard.button(
-					";",
+					"'",
 					"󰀱   Harpoon",
 					":lua require('harpoon').ui:toggle_quick_menu(require('harpoon'):list())<cr>"
 				),
