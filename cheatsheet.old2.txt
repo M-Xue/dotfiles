@@ -1,0 +1,134 @@
+## lsp
+Function signature under cursor in insert mode | <c-k>
+
+## telescope
+Send selection to quickfix list | <c-q> 
+
+## terminal
+Open split terminal | [new terminal number]<leader>tt
+
+## textobj
+Call | m
+
+## textobj
+Function | f
+
+## textobj
+Class | c
+
+## textobj
+Conditional | i
+
+## textobj
+Loop | l
+
+## textobj
+Parameter | a
+
+## textobj
+Assignment | =
+
+## textobj
+Assignment LHS | l=
+
+## textobj
+Assignment RHS | r=
+
+## textobj
+Scope | s
+
+## textobj
+Comment | /
+
+## to_move
+Goto next start | "]"[textobj]
+
+## to_move
+Goto next end | "]"[textobj capitalised]
+
+## to_move
+Goto previous start | "["[textobj]
+
+## to_move
+Goto previous end | "["[textobj capitalised]
+
+## to_adv
+Subword (respects _ and -) | S
+
+## to_adv
+toNextClosingBracket | C
+
+## to_adv
+toNextQuotationMark | Q
+
+## to_adv
+anyQuote | q
+
+## to_adv
+anyBracket | o
+
+## to_adv
+restOfParagraph | r
+
+## to_adv
+lineCharacterwise | _
+
+## to_adv
+value of key-value pair | v
+
+## to_adv
+key of key-value pair | k
+
+## to_adv
+url | L
+
+## to_adv
+number | n
+
+## to_adv
+diagnostic | !
+
+## sed
+Basic | :[range]s/<find-regex>/<replace-regex>/[flags]
+
+## sed_flag
+Confirm each substitution before applying the change | c 
+
+## sed_flag
+Remove multiple instances on same line | g 
+
+## sed_range
+Current selection | Press : in visual mode with selection
+
+## sed_range
+All lines in buffer | %
+
+## fold
+Toggle fold | za
+
+## fold
+Open all folds | zR 
+
+## fold
+Close all folds | zR 
+
+## fzf
+Exact match | 'foo 
+
+## fzf
+Prefix exact match | ^foo 
+
+## fzf
+Suffix exact match | foo$ 
+
+## fzf
+Inverse exact match | !foo 
+
+## fzf
+Inverse prefix exact match | !^foo 
+
+## fzf
+Inverse suffix exact match | !foo$ 
+
+## fzf
+A single bar character term acts as an OR operator. E.g., the following query matches entries that start with core and end with either go, or py | ^core go$ | py$

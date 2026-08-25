@@ -2,25 +2,18 @@
 Nvim Clean Uptodo
 ==================================================
 
-fix treesitter error 
-fix copilot
+manage qfl natively 
+- add shortcuts to cheetsheet
+open qfl with trouble
+
+add tmux shortcuts to the cheatsheet
+add how to show hidden files in file explorer
+- add tmux bindings to cheatsheet
+- add snacks nvim bindings for picker adn explore to chearsheet
+
+debugger
 
 ===========================================
-
-fix linter and formatter 
-
-fix start up times
-- do at work
-- use snacks nvim profiler
-
-===========================================
-
-trouble qfl 
-- file picker with snacks integration
-
-===========================================
-
-Augment AI  
 
 - cheatsheet has comment keymap
 - diffview 
@@ -29,10 +22,6 @@ Augment AI
     - accept income keymap 
     - accept current keymap
     - next diff keymap
-
-for lualine: 
-- lsp
-https://github.com/AndreM222/copilot-lualine
 
 ==================================================
 
