@@ -72,6 +72,6 @@ M.plugin = {
 		local gitsigns = require("gitsigns")
 		gitsigns.setup(M.config)
 	end,
-    event = "VeryLazy",
+    event = "BufEnter",
 }
 return M

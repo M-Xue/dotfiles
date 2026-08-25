@@ -4,14 +4,14 @@ return {
 	require("plugins.git.diffview"),
 	{
 		"aaronhallaert/advanced-git-search.nvim",
-		event = "VeryLazy",
+		event = "BufEnter",
 	},
 	{
 		"tpope/vim-fugitive",
-		event = "VeryLazy",
+		event = "BufEnter",
 	},
 	{
 		"tpope/vim-rhubarb",
-		event = "VeryLazy",
+		event = "BufEnter",
 	},
 }
