@@ -42,7 +42,7 @@ local function configure_lsp()
 		require("plugins.lsp.keymaps").init_diagnostics_keymaps(bufnr)
 
 		local navic = require("nvim-navic")
-		if client.supports_method("textDocument/documentSymbol") then
+		if client:supports_method("textDocument/documentSymbol") then
 			navic.attach(client, bufnr)
 		end
 	end
