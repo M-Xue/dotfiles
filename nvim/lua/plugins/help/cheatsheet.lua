@@ -6,7 +6,7 @@ return {
 			{ "nvim-lua/popup.nvim" },
 			{ "nvim-lua/plenary.nvim" },
 		},
-        cmd = "Cheatsheet",
+		cmd = "Cheatsheet",
 		opts = {
 			bundled_cheatsheets = false,
 			bundled_plugin_cheatsheets = false,

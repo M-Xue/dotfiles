@@ -1,24 +1,9 @@
--- Formatters to install
--- =====================
--- "prettierd",
--- "prettier",
--- "stylua",
--- "goimports-reviser",
--- "golines",
--- "gofumpt",
--- "markdownlint-cli2",
-
--- Linters to install
--- =====================
--- "eslint_d",
--- "stylelint",
--- "golangci-lint",
--- "markdownlint-cli2",
--- "cspell",
-
 return {
 	{
 		"mason-org/mason.nvim",
+		dependencies = {
+			"neovim/nvim-lspconfig",
+		},
 		opts = {
 			ui = {
 				border = "none",
@@ -33,33 +18,60 @@ return {
 		},
 	},
 	{
-		"mason-org/mason-lspconfig.nvim",
-		opts = {
-			ensure_installed = {
-				"lua_ls",
-				"ts_ls",
-				"gopls",
-				"pyright",
-				"rust_analyzer",
-
-				"html",
-				"jsonls",
-				"marksman",
-				"mdx_analyzer",
-
-				"emmet_language_server",
-				"cssls",
-				"cssmodules_ls",
-				"tailwindcss",
-				"astro",
-				"svelte",
-
-				"vimls",
-			},
-		},
+		"WhoIsSethDaniel/mason-tool-installer.nvim",
 		dependencies = {
-			"mason-org/mason.nvim",
-			"neovim/nvim-lspconfig",
+			"williamboman/mason.nvim",
+			"williamboman/mason-lspconfig.nvim",
 		},
+		config = function()
+			require("mason").setup()
+
+			require("mason-lspconfig").setup({
+				ensure_installed = {
+					-- LSPs
+					"lua_ls",
+					"ts_ls",
+					"gopls",
+					"pyright",
+					"rust_analyzer",
+					"html",
+					"jsonls",
+					"marksman",
+					"mdx_analyzer",
+					"emmet_language_server",
+					"cssls",
+					"cssmodules_ls",
+					"tailwindcss",
+					"astro",
+					"svelte",
+					"vimls",
+					"bashls",
+					"markdown-oxide",
+				},
+			})
+
+			require("mason-tool-installer").setup({
+				ensure_installed = {
+					-- Formatters
+					"stylua",
+					"markdownlint-cli2",
+					"oxfmt",
+					"prettierd",
+					-- "prettier",
+					"goimports-reviser",
+					"golines",
+					"gofumpt",
+
+					-- Linters
+					"cspell",
+					"eslint_d",
+					"markdownlint-cli2",
+					"stylelint",
+					"golangci-lint",
+				},
+				auto_update = true,
+				run_on_start = true,
+			})
+		end,
 	},
 }
