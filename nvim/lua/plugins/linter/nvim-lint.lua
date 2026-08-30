@@ -7,10 +7,10 @@ M.linters_by_ft = {
 	typescriptreact = { "eslint_d" },
 	astro = { "eslint_d" },
 	svelte = { "eslint_d" },
-	-- css = { "stylelint" },
+	css = { "stylelint" },
 
 	go = { "golangcilint" },
-	markdown = { "markdownlint" },
+	markdown = { "markdownlint-cli2" },
 	lua = {},
 	text = {},
 }
