@@ -75,3 +75,36 @@ Delete a worktree | git worktree remove <WORKTREE-PATH>
 
 ## git worktree
 Clean up worktrees metadata | git worktree prune
+
+## gh stack
+Initialize a new stack in the current repository | gh stack init
+
+## gh stack
+Add a new branch on top of the current stack | gh stack add
+
+## gh stack
+View the current stack | gh stack view
+
+## gh stack
+Check out a stack by stack number, pull request number, pull request URL, or branch name | gh stack checkout
+
+## gh stack
+Interactively restructure the current stack | gh stack modify
+
+## gh stack
+Push all branches, then create or update pull requests and the stack on GitHub | gh stack submit
+
+## gh stack
+Fetch, rebase, push, and sync pull request state in a single command | gh stack sync
+
+## gh stack
+Pull from the remote and run a cascading rebase across the stack | gh stack rebase
+
+## gh stack
+Push the active branches in the current stack to the remote | gh stack push
+
+## gh stack
+Merge one or more stacked pull requests at once | gh stack merge
+
+## gh stack
+Interactively switch to another branch in the stack | gh stack switch
