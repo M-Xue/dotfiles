@@ -1,28 +1,32 @@
 # dotfiles
 
-This repo contains my dotfiles configurations. 
+This repo contains my dotfiles configurations.
 
 ## Tools
 
 The technologies I use (not all have configurations) are:
 
 General
+
 - nvim: text editor
 - ghostty: terminal emulator
 - oh my zsh: advanced zsh configuration
-- tmux: terminal multiplexer that lets you  manage multiple terminal sessions
+- tmux: terminal multiplexer that lets you manage multiple terminal sessions
 - gh: GitHub CLI (stacked PRs)
 
 TUI
+
 - lazygit: interactive git tui
 - btop: resource monitor for processor, memory, disks, network and processes
 
 AI Agentic Tools
+
 - herdr
 - claude code
 - opencode
 
 Improved Tools
+
 - zoxide: improved cd
 - ripgrep: improved grep
 - bat: improved cat
@@ -30,22 +34,31 @@ Improved Tools
 - eza: improved ls
 
 Oh My Zsh Plugins
+
 - zsh-autosuggestions
 - zsh-syntax-highlighting
 - powerlevel10k
 
+Languages/Package Managers/Runtimes
+
+- Go
+- Rust
+- Python3
+- Node
+  - NPM
+
 ## Set up
 
-Some of these tools require their configurations in specific paths relative to 
-your root directory. The `install.sh` script will apply simlinks to all folders 
+Some of these tools require their configurations in specific paths relative to
+your root directory. The `install.sh` script will apply simlinks to all folders
 and files and place them in the correct location.
 
-**This requires the repo to be placed in the root repository because the script 
+**This requires the repo to be placed in the root repository because the script
 uses absolute paths.**
 
-The script will also install all the relevant programs using the package manager 
-associated with your OS. Homebrew for MacOS. `sudo apt` for Ubuntu. Some 
-programs will also be directly cloned from GitHub, as per their offical 
+The script will also install all the relevant programs using the package manager
+associated with your OS. Homebrew for MacOS. `sudo apt` for Ubuntu. Some
+programs will also be directly cloned from GitHub, as per their offical
 installation instructions.
 
 You can run `install.sh` again to get the latest versions or get any new tools.
