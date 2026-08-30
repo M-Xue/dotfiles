@@ -28,7 +28,6 @@ return {
 
 			require("mason-lspconfig").setup({
 				ensure_installed = {
-					-- LSPs
 					"lua_ls",
 					"ts_ls",
 					"gopls",
@@ -36,8 +35,6 @@ return {
 					"rust_analyzer",
 					"html",
 					"jsonls",
-					"marksman",
-					"mdx_analyzer",
 					"emmet_language_server",
 					"cssls",
 					"cssmodules_ls",
@@ -46,7 +43,10 @@ return {
 					"svelte",
 					"vimls",
 					"bashls",
+
 					"markdown-oxide",
+					"marksman",
+					"mdx_analyzer",
 				},
 			})
 

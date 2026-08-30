@@ -84,6 +84,37 @@ local ts_textobj_config = {
 	},
 }
 
+-- Neovim 0.12's markdown fenced-code-block injection (`#set-lang-from-info-string!`)
+-- crashes the treesitter highlighter ("attempt to call method 'range' (a nil value)")
+-- whenever an LSP-triggered redraw (diagnostics/semantic tokens) forces a parse
+-- mid-highlight. See https://github.com/nvim-treesitter/nvim-treesitter/issues/8618
+-- Strip just that injection pattern; markdown_inline/html/yaml/toml injections are
+-- unaffected, so only syntax highlighting *inside* fenced code blocks is lost.
+local function disable_buggy_markdown_code_fence_injection()
+	local files = vim.treesitter.query.get_files("markdown", "injections")
+	local parts = {}
+	for _, path in ipairs(files) do
+		local fh = io.open(path, "r")
+		if fh then
+			table.insert(parts, fh:read("*a"))
+			fh:close()
+		end
+	end
+	local original = table.concat(parts, "\n")
+
+	local start_pos = original:find("(fenced_code_block", 1, true)
+	if not start_pos then
+		return
+	end
+	local block = original:match("%b()", start_pos)
+	if not block or not block:find("#set%-lang%-from%-info%-string!") then
+		return
+	end
+
+	local patched = original:sub(1, start_pos - 1) .. original:sub(start_pos + #block)
+	vim.treesitter.query.set("markdown", "injections", patched)
+end
+
 return {
 	{
 		"nvim-treesitter/nvim-treesitter",
@@ -91,6 +122,7 @@ return {
 		branch = "master",
 		build = ":TSUpdate",
 		config = function()
+			disable_buggy_markdown_code_fence_injection()
 			require("nvim-treesitter.configs").setup({
 				ensure_installed = {
 					"javascript",
@@ -112,7 +144,7 @@ return {
 					"graphql",
 					"dockerfile",
 					"astro",
-					-- "markdown",
+					"markdown",
 					"markdown_inline",
 				},
 				highlight = {
