@@ -44,7 +44,7 @@ return {
 					"vimls",
 					"bashls",
 
-					"markdown-oxide",
+					"markdown_oxide",
 					"marksman",
 					"mdx_analyzer",
 				},
