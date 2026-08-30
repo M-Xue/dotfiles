@@ -1,2 +1,62 @@
 ## editing
 Redo | <c-r>
+
+## tmux
+New session | tmux new
+
+## tmux
+List sessions | tmux ls
+
+## tmux
+Attach to session | tmux a -t name
+
+## tmux
+Rename session | tmux rename-session -t oldname newname
+
+## tmux
+Detach from session | <leader>d # From inside session
+
+## tmux
+Kill session | tmux kill-session -t name
+
+## tmux 
+Kill server (all sessions) | tmux kill-server
+
+## tmux
+New window | <leader>w
+
+## tmux
+List windows | <leader>l
+
+## tmux
+Pick window | <leader>[0-9]
+
+## tmux
+Previous window | <leader>p
+
+## tmux
+Kill window | <leader>Q
+
+## tmux
+New vertical pane | <leader>v
+
+## tmux
+New horizontal pane | <leader>h
+
+## tmux
+Move between panes | <leader>[hjkl]
+
+## tmux
+Swap current pane with the previous one | <leader>{
+
+## tmux
+Swap current pane with the next one | <leader>}
+
+## tmux
+Break pane into new window | <leader>!
+
+## tmux
+Move pane into existing window | <leader>: "join-pane -t :[0-9]"
+
+## tmux
+Kill pane | <leader>q
