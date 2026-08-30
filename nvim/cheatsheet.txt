@@ -61,50 +61,50 @@ Move pane into existing window | <leader>: "join-pane -t :[0-9]"
 ## tmux
 Kill pane | <leader>q
 
-## git worktree
+## git-worktree
 Create new worktree from existing branch | git worktree add <WORKTREE-PATH> <BRANCH>
 
-## git worktree
+## git-worktree
 Create new branch and its worktree | git worktree add -b <BRANCH> <WORKTREE-PATH>
 
-## git worktree
+## git-worktree
 List current worktrees | git worktree list
 
-## git worktree
+## git-worktree
 Delete a worktree | git worktree remove <WORKTREE-PATH>
 
-## git worktree
+## git-worktree
 Clean up worktrees metadata | git worktree prune
 
-## gh stack
+## gh-stack
 Initialize a new stack in the current repository | gh stack init
 
-## gh stack
+## gh-stack
 Add a new branch on top of the current stack | gh stack add
 
-## gh stack
+## gh-stack
 View the current stack | gh stack view
 
-## gh stack
+## gh-stack
 Check out a stack by stack number, pull request number, pull request URL, or branch name | gh stack checkout
 
-## gh stack
+## gh-stack
 Interactively restructure the current stack | gh stack modify
 
-## gh stack
+## gh-stack
 Push all branches, then create or update pull requests and the stack on GitHub | gh stack submit
 
-## gh stack
+## gh-stack
 Fetch, rebase, push, and sync pull request state in a single command | gh stack sync
 
-## gh stack
+## gh-stack
 Pull from the remote and run a cascading rebase across the stack | gh stack rebase
 
-## gh stack
+## gh-stack
 Push the active branches in the current stack to the remote | gh stack push
 
-## gh stack
+## gh-stack
 Merge one or more stacked pull requests at once | gh stack merge
 
-## gh stack
+## gh-stack
 Interactively switch to another branch in the stack | gh stack switch
