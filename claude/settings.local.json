@@ -1,0 +1,13 @@
+{
+  "model": "opus[1m]",
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$HOME/.claude/statusline.sh\""
+  },
+  "effortLevel": "high",
+  "theme": "auto",
+  "permissions": {
+    "defaultMode": "auto",
+    "allow": []
+  }
+}
