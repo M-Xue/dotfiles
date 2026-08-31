@@ -108,3 +108,51 @@ Merge one or more stacked pull requests at once | gh stack merge
 
 ## gh-stack
 Interactively switch to another branch in the stack | gh stack switch
+
+## sed
+General structure | :[range]s/{pattern}/{sub}/[flags]
+
+## sed range
+current line only | (none)	
+
+## sed range
+whole file| %	
+
+## sed range
+current line | .	
+
+## sed range
+last line | $	
+
+## sed range
+lines 5 to 10 | 5,10	
+
+## sed range
+current line to end | .,$	
+
+## sed range
+between marks a and b | 'a,'b	
+
+## sed range
+current visual selection (auto-filled when you press : after selecting) | '<,'>	
+
+## sed range
+from next line matching foo to next matching bar | /foo/,/bar/	
+
+## sed flag
+replace all matches on the line (without it, only the first match per line) | g	
+
+## sed flag
+case-insensitive match | i	
+
+## sed flag
+force case-sensitive match | I	
+
+## sed flag
+confirm each substitution (y/n/a/q/l) | c	
+
+## sed flag
+don't substitute, just report count of matches | n	
+
+## sed flag
+suppress errors if pattern not found | e	
