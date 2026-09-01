@@ -63,18 +63,20 @@ fi
 sep
 
 # --- section: context window usage ---
+# always shown, including at 0% (the payload omits the field early in a session)
 CTX_CELLS=10
-pct=$(jq -r '.context_window.used_percentage // empty' <<<"$input")
-if [ -n "$pct" ]; then
-  pct=$(printf '%.0f' "$pct")
-  [ "$pct" -lt 0 ] && pct=0
-  [ "$pct" -gt 100 ] && pct=100
-  filled=$(( pct * CTX_CELLS / 100 ))
+pct=$(jq -r '.context_window.used_percentage // 0' <<<"$input")
+case "$pct" in
+  ''|*[!0-9.]*) pct=0 ;;
+esac
+pct=$(printf '%.0f' "$pct")
+[ "$pct" -lt 0 ] && pct=0
+[ "$pct" -gt 100 ] && pct=100
+filled=$(( pct * CTX_CELLS / 100 ))
 
-  bar=''
-  for ((i = 0; i < CTX_CELLS; i++)); do
-    if [ "$i" -lt "$filled" ]; then bar+='█'; else bar+='░'; fi
-  done
+bar=''
+for ((i = 0; i < CTX_CELLS; i++)); do
+  if [ "$i" -lt "$filled" ]; then bar+='█'; else bar+='░'; fi
+done
 
-  printf '%sContext%s %s%s %s%%%s' "$C_TEXT" "$RESET" "$C_CTX" "$bar" "$pct" "$RESET"
-fi
+printf '%sContext%s %s%s %s%%%s' "$C_TEXT" "$RESET" "$C_CTX" "$bar" "$pct" "$RESET"
