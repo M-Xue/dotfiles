@@ -223,6 +223,8 @@ brew_pkg eza
 info "Linking ~/dotfiles/eza -> ~/.config/eza"
 ln -sfn ~/dotfiles/eza ~/.config/eza
 
+ensure_rc_line "alias eza='eza -la --git --header --git-repos'"
+
 # ================================================================== delta ===
 #
 # The formula is git-delta; the binary it installs is `delta`.
