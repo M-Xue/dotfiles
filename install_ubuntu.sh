@@ -217,6 +217,17 @@ if needs_install bat "$(tool_version bat --version)" "$BAT_LATEST"; then
   rm -rf "$tmp"
 fi
 
+info "Linking ~/dotfiles/bat -> ~/.config/bat"
+ln -sfn ~/dotfiles/bat ~/.config/bat
+
+# bat does not read .tmTheme files at runtime - it compiles them into a binary
+# cache under ~/.cache/bat, which is bat-version specific and so cannot be
+# committed. Rebuild it here, once the themes are linked into place.
+if [ -n "$(ls -A ~/dotfiles/bat/themes 2>/dev/null)" ]; then
+  info "Building bat theme cache"
+  bat cache --build
+fi
+
 # ===================================================================== jq ===
 #
 # jq's asset name carries no version, so it can be fetched by /latest/download.
@@ -273,6 +284,21 @@ if needs_install btop "$(tool_version btop --version)" "$BTOP_LATEST"; then
   sudo mkdir -p /usr/local/share/btop
   sudo cp -r "$tmp/btop/themes" /usr/local/share/btop/    # extra themes for `btop --theme`
   rm -rf "$tmp"
+fi
+
+mkdir -p ~/.config/btop
+
+# Themes are only ever read, so they can be linked.
+info "Linking ~/dotfiles/btop/themes -> ~/.config/btop/themes"
+ln -sfn ~/dotfiles/btop/themes ~/.config/btop/themes
+
+# btop.conf is different: btop rewrites it on exit, so a symlink would leave
+# btop editing this repo. Copy it once and leave any local edits alone.
+if [ -e ~/.config/btop/btop.conf ]; then
+  info "~/.config/btop/btop.conf already exists - leaving it alone"
+else
+  info "Copying btop.conf to ~/.config/btop/btop.conf"
+  cp ~/dotfiles/btop/btop.conf ~/.config/btop/btop.conf
 fi
 
 # ==================================================================== eza ===
