@@ -9,12 +9,12 @@ The technologies I use (not all have configurations) are:
 General
 
 - nvim: text editor
-- ghostty: terminal emulator
-- oh my zsh: advanced zsh configuration
 - tmux: terminal multiplexer that lets you manage multiple terminal sessions
-- gh: GitHub CLI (stacked PRs)
 - fzf: fuzzy finder for files, command history, git branches
 - jq: command-line tool for working with JSON
+- gh: GitHub CLI (stacked PRs)
+- ghostty: terminal emulator
+- oh my zsh: advanced zsh configuration
 
 TUI
 
@@ -41,29 +41,16 @@ Oh My Zsh Plugins
 - zsh-syntax-highlighting
 - powerlevel10k
 
-Languages/Package Managers/Runtimes
+## Set up for Ubuntu
 
-- Go
-- Rust
-- Python3
-- Node
-  - NPM
+Clone this repo to `~/dotfiles` - `install_ubuntu.sh` hardcodes that path - then
+run `./install_ubuntu.sh`. It installs every tool listed above and symlinks the
+configs into the paths each tool expects.
 
-## Set up
-
-Some of these tools require their configurations in specific paths relative to
-your root directory. The `install.sh` script will apply simlinks to all folders
-and files and place them in the correct location.
-
-The script resolves its own location, so the repo can live anywhere - the
-symlinks it creates point back to wherever you cloned it.
-
-The script will also install all the relevant programs using the package manager
-associated with your OS. Homebrew for MacOS. `sudo apt` for Ubuntu. Some
-programs will also be directly cloned from GitHub, as per their offical
-installation instructions.
-
-You can run `install.sh` again to get the latest versions or get any new tools.
+Run it again to update. Tools that do not update themselves (nvim, tmux,
+lazygit, zoxide, ripgrep, bat, jq, fzf, btop, eza, delta) are checked against
+the latest upstream release and replaced only if they are behind. gh and git are
+left to apt; claude code, opencode and herdr manage their own updates.
 
 ## Misc
 

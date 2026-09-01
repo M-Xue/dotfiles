@@ -1,3 +1,8 @@
+# Relative include: resolved against this file's directory, so it follows the
+# ~/.config/git -> ~/dotfiles/git symlink.
+[include]
+    path = catppuccin.gitconfig
+
 [core]
     pager = delta
 
@@ -5,6 +10,9 @@
     diffFilter = delta --color-only
 
 [delta]
+    features = catppuccin-macchiato
+    # delta reads syntax themes from bat's compiled cache, not its own.
+    syntax-theme = Catppuccin Macchiato
     navigate = true  # use n and N to move between diff sections
     side-by-side = true
     line-numbers = true
