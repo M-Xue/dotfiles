@@ -65,7 +65,10 @@ New vertical pane | <leader>v
 New horizontal pane | <leader>h
 
 ## tmux
-Move between panes | <leader>[arrow key]
+Change/move/navigate between panes | <leader>[arrow key]
+
+## tmux 
+Swap panes | <leader><shift+[arrow key]>
 
 ## tmux
 Swap current pane with the previous one | <leader>{
@@ -81,6 +84,63 @@ Move pane into existing window | <leader>: "join-pane -t :[0-9]"
 
 ## tmux
 Kill pane | <leader>q
+
+## herdr
+Reload config | <leader>.
+
+## herdr
+Detach | <leader>d
+
+## herdr
+Focus agent 1-9 | <leader><shift+[1-9]>
+
+## herdr
+Focus workspace list | <leader>L
+
+## herdr
+Rename workspace | <leader>R
+
+## herdr
+New workspace | <leader>N
+
+## herdr
+Close workspace | <leader>X
+
+## herdr
+New tab | <leader>n
+
+## herdr
+Pick tab | <leader>[1-9]
+
+## herdr
+List all tabs | <leader>l
+
+## herdr
+Close tab | <leader>Q
+
+## herdr
+Raname tab | <leader>r
+
+## herdr
+Move tab to left | <leader>"<"
+
+## herdr
+Move tab to right | <leader>">"
+
+## herdr
+New vertical pane | <leader>v
+
+## herdr
+New horizontal pane | <leader>h
+
+## herdr
+Close pane | <leader>q
+
+## herdr
+Change/move/navigate between panes | <leader>[arrow key]
+
+## herdr
+Swap panes | <leader><shift+[arrow key]>
 
 ## git-worktree
 Create new worktree from existing branch | git worktree add <WORKTREE-PATH> <BRANCH>

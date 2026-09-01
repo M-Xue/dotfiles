@@ -354,6 +354,8 @@ fi
 info "Linking ~/dotfiles/eza -> ~/.config/eza"
 ln -sfn ~/dotfiles/eza ~/.config/eza
 
+ensure_rc_line "alias eza='eza -la --git --header --git-repos'"
+
 # ================================================================== delta ===
 #
 # git-delta only reached the Ubuntu repos in 24.04. The .deb on the release
