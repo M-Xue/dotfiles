@@ -10,6 +10,9 @@
 # compared against the latest upstream release and replaced only if it differs.
 # The exceptions are gh and git (apt keeps them current) and claude code,
 # opencode and herdr, which each self-update.
+#
+# Output: only progress lines are printed. Everything a command writes goes to
+# a log file, which is named for you if a step fails.
 
 set -euo pipefail
 
@@ -17,6 +20,26 @@ set -euo pipefail
 
 info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n' "$*" >&2; }
+die()  { printf '\033[1;31mxx\033[0m %s\n' "$*" >&2; exit 1; }
+
+LOG="/tmp/install_ubuntu-$(date +%Y%m%d-%H%M%S).log"
+
+# Anything that fails outside run() still points at the log rather than
+# vanishing with a bare non-zero exit.
+trap 'warn "Aborted. Full output: $LOG"' ERR
+
+# Run a command with its output captured in $LOG instead of on screen. Builds,
+# dpkg and apt are all noisy and none of it matters until something breaks - at
+# which point the tail is printed and the log named.
+run() {
+  printf '\n$ %s\n' "$*" >> "$LOG"
+  if ! "$@" >> "$LOG" 2>&1; then
+    warn "Failed: $*"
+    warn "Last 20 lines of $LOG:"
+    tail -20 "$LOG" >&2
+    die "Full output: $LOG"
+  fi
+}
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
@@ -60,6 +83,15 @@ needs_install() {
   fi
 }
 
+# True if an apt source for this host is already configured anywhere. Matching
+# on content rather than filename matters: a repo added by an older installer
+# under a different filename, or with its key in /usr/share/keyrings, still
+# counts - adding a second entry makes apt fail with a Signed-By conflict.
+#   apt_source_exists <host or path fragment>
+apt_source_exists() {
+  grep -rqs -- "$1" /etc/apt/sources.list /etc/apt/sources.list.d/
+}
+
 # Add a line to whichever shell rc files exist, once. The shell is not assumed
 # to be zsh or bash, and some lines differ between them (fzf), so a second
 # argument overrides the line used for zsh.
@@ -94,7 +126,7 @@ ensure_rc_line() {
 # cloned to ~/dotfiles.
 
 info "Updating apt package lists"
-sudo apt update
+run sudo apt update
 
 mkdir -p ~/.config    # ln won't create parents; -p is a no-op if it exists
 
@@ -113,12 +145,12 @@ if needs_install neovim \
 
   # Download into a temp dir so the tarball doesn't land in the repo.
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/nvim-linux-x86_64.tar.gz" \
+  run curl -fsSL -o "$tmp/nvim-linux-x86_64.tar.gz" \
     https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
   # Unpacking over the old tree would leave files from the previous version
   # behind, so clear it out first.
-  sudo rm -rf "$NVIM_DIR"
-  sudo tar -C /opt -xzf "$tmp/nvim-linux-x86_64.tar.gz"
+  run sudo rm -rf "$NVIM_DIR"
+  run sudo tar -C /opt -xzf "$tmp/nvim-linux-x86_64.tar.gz"
   rm -rf "$tmp"
 fi
 
@@ -142,29 +174,31 @@ LAZYGIT_LATEST="$(gh_latest_version jesseduffield/lazygit)"
 
 if needs_install lazygit "$(tool_version lazygit --version)" "$LAZYGIT_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/lazygit.tar.gz" \
+  run curl -fsSL -o "$tmp/lazygit.tar.gz" \
     "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_LATEST}/lazygit_${LAZYGIT_LATEST}_Linux_x86_64.tar.gz"
-  tar -xzf "$tmp/lazygit.tar.gz" -C "$tmp" lazygit
-  sudo install -m 755 "$tmp/lazygit" /usr/local/bin/lazygit
+  run tar -xzf "$tmp/lazygit.tar.gz" -C "$tmp" lazygit
+  run sudo install -m 755 "$tmp/lazygit" /usr/local/bin/lazygit
   rm -rf "$tmp"
 fi
 
 # =================================================================== tmux ===
 #
 # tmux ships source tarballs only - there are no official binaries - so the
-# latest release means compiling it.
+# latest release means compiling it. The build is the noisiest thing here; -q
+# and -s keep it quiet, and the log has the rest.
 
 TMUX_LATEST="$(gh_latest_version tmux/tmux)"
 
 if needs_install tmux "$(tool_version tmux -V)" "$TMUX_LATEST"; then
-  sudo apt install -y build-essential bison pkg-config libevent-dev libncurses-dev
+  info "Installing build dependencies"
+  run sudo apt install -y build-essential bison pkg-config libevent-dev libncurses-dev
 
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/tmux.tar.gz" \
+  run curl -fsSL -o "$tmp/tmux.tar.gz" \
     "https://github.com/tmux/tmux/releases/download/${TMUX_LATEST}/tmux-${TMUX_LATEST}.tar.gz"
-  tar -xzf "$tmp/tmux.tar.gz" -C "$tmp"
-  # Subshell so the build does not move the working directory for later sections.
-  ( cd "$tmp/tmux-${TMUX_LATEST}" && ./configure && make -j"$(nproc)" && sudo make install )
+  run tar -xzf "$tmp/tmux.tar.gz" -C "$tmp"
+  info "Compiling tmux $TMUX_LATEST (this takes a minute)"
+  run bash -c "cd '$tmp/tmux-${TMUX_LATEST}' && ./configure -q && make -s -j$(nproc) && sudo make install"
   rm -rf "$tmp"
 fi
 
@@ -181,9 +215,9 @@ ZOXIDE_LATEST="$(gh_latest_version ajeetdsouza/zoxide)"
 
 if needs_install zoxide "$(tool_version zoxide --version)" "$ZOXIDE_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/zoxide.deb" \
+  run curl -fsSL -o "$tmp/zoxide.deb" \
     "https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_LATEST}/zoxide_${ZOXIDE_LATEST}-1_amd64.deb"
-  sudo dpkg -i "$tmp/zoxide.deb"
+  run sudo dpkg -i "$tmp/zoxide.deb"
   rm -rf "$tmp"
 fi
 
@@ -196,9 +230,9 @@ RIPGREP_LATEST="$(gh_latest_version BurntSushi/ripgrep)"
 
 if needs_install ripgrep "$(tool_version rg --version)" "$RIPGREP_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/ripgrep.deb" \
+  run curl -fsSL -o "$tmp/ripgrep.deb" \
     "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_LATEST}/ripgrep_${RIPGREP_LATEST}-1_amd64.deb"
-  sudo dpkg -i "$tmp/ripgrep.deb"
+  run sudo dpkg -i "$tmp/ripgrep.deb"
   rm -rf "$tmp"
 fi
 
@@ -211,9 +245,9 @@ BAT_LATEST="$(gh_latest_version sharkdp/bat)"
 
 if needs_install bat "$(tool_version bat --version)" "$BAT_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/bat.deb" \
+  run curl -fsSL -o "$tmp/bat.deb" \
     "https://github.com/sharkdp/bat/releases/download/v${BAT_LATEST}/bat_${BAT_LATEST}_amd64.deb"
-  sudo dpkg -i "$tmp/bat.deb"
+  run sudo dpkg -i "$tmp/bat.deb"
   rm -rf "$tmp"
 fi
 
@@ -225,7 +259,7 @@ ln -sfn ~/dotfiles/bat ~/.config/bat
 # committed. Rebuild it here, once the themes are linked into place.
 if [ -n "$(ls -A ~/dotfiles/bat/themes 2>/dev/null)" ]; then
   info "Building bat theme cache"
-  bat cache --build
+  run bat cache --build
 fi
 
 # ===================================================================== jq ===
@@ -238,9 +272,9 @@ JQ_LATEST="${JQ_LATEST#jq-}"
 
 if needs_install jq "$(tool_version jq --version)" "$JQ_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/jq" \
+  run curl -fsSL -o "$tmp/jq" \
     https://github.com/jqlang/jq/releases/latest/download/jq-linux-amd64
-  sudo install -m 755 "$tmp/jq" /usr/local/bin/jq
+  run sudo install -m 755 "$tmp/jq" /usr/local/bin/jq
   rm -rf "$tmp"
 fi
 
@@ -253,10 +287,10 @@ FZF_LATEST="$(gh_latest_version junegunn/fzf)"
 
 if needs_install fzf "$(tool_version fzf --version)" "$FZF_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/fzf.tar.gz" \
+  run curl -fsSL -o "$tmp/fzf.tar.gz" \
     "https://github.com/junegunn/fzf/releases/download/v${FZF_LATEST}/fzf-${FZF_LATEST}-linux_amd64.tar.gz"
-  tar -xzf "$tmp/fzf.tar.gz" -C "$tmp" fzf
-  sudo install -m 755 "$tmp/fzf" /usr/local/bin/fzf
+  run tar -xzf "$tmp/fzf.tar.gz" -C "$tmp" fzf
+  run sudo install -m 755 "$tmp/fzf" /usr/local/bin/fzf
   rm -rf "$tmp"
 fi
 
@@ -274,15 +308,15 @@ BTOP_LATEST="$(gh_latest_version aristocratos/btop)"
 
 if needs_install btop "$(tool_version btop --version)" "$BTOP_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/btop.tar.gz" \
+  run curl -fsSL -o "$tmp/btop.tar.gz" \
     https://github.com/aristocratos/btop/releases/latest/download/btop-x86_64-unknown-linux-musl.tar.gz
-  tar -xzf "$tmp/btop.tar.gz" -C "$tmp"
-  sudo install -m 755 "$tmp/btop/bin/btop" /usr/local/bin/btop
+  run tar -xzf "$tmp/btop.tar.gz" -C "$tmp"
+  run sudo install -m 755 "$tmp/btop/bin/btop" /usr/local/bin/btop
   # Themes are a directory, so clear the old set out rather than copying over
   # it and leaving themes that upstream has since dropped.
-  sudo rm -rf /usr/local/share/btop/themes
-  sudo mkdir -p /usr/local/share/btop
-  sudo cp -r "$tmp/btop/themes" /usr/local/share/btop/    # extra themes for `btop --theme`
+  run sudo rm -rf /usr/local/share/btop/themes
+  run sudo mkdir -p /usr/local/share/btop
+  run sudo cp -r "$tmp/btop/themes" /usr/local/share/btop/
   rm -rf "$tmp"
 fi
 
@@ -310,10 +344,10 @@ EZA_LATEST="$(gh_latest_version eza-community/eza)"
 
 if needs_install eza "$(tool_version eza --version)" "$EZA_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/eza.tar.gz" \
+  run curl -fsSL -o "$tmp/eza.tar.gz" \
     https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
-  tar -xzf "$tmp/eza.tar.gz" -C "$tmp" ./eza
-  sudo install -m 755 "$tmp/eza" /usr/local/bin/eza
+  run tar -xzf "$tmp/eza.tar.gz" -C "$tmp" ./eza
+  run sudo install -m 755 "$tmp/eza" /usr/local/bin/eza
   rm -rf "$tmp"
 fi
 
@@ -329,9 +363,9 @@ DELTA_LATEST="$(gh_latest_version dandavison/delta)"
 
 if needs_install delta "$(tool_version delta --version)" "$DELTA_LATEST"; then
   tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/git-delta.deb" \
+  run curl -fsSL -o "$tmp/git-delta.deb" \
     "https://github.com/dandavison/delta/releases/download/${DELTA_LATEST}/git-delta_${DELTA_LATEST}_amd64.deb"
-  sudo dpkg -i "$tmp/git-delta.deb"
+  run sudo dpkg -i "$tmp/git-delta.deb"
   rm -rf "$tmp"
 fi
 
@@ -341,19 +375,21 @@ fi
 # so use GitHub's own apt repo - their documented install method. apt keeps it
 # current from then on, so no version check is needed here.
 
-if [ ! -e /etc/apt/sources.list.d/github-cli.list ]; then
+if apt_source_exists cli.github.com; then
+  info "GitHub CLI apt repository already configured - skipping"
+else
   info "Adding the GitHub CLI apt repository"
-  sudo mkdir -p -m 755 /etc/apt/keyrings
-  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-    | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null
-  sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-    | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-  sudo apt update    # the repo just added is not in the lists from setup yet
+  run sudo mkdir -p -m 755 /etc/apt/keyrings
+  run bash -c 'curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null'
+  run sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+  run bash -c "echo 'deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main' \
+    | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null"
+  run sudo apt update    # the repo just added is not in the lists from setup yet
 fi
 
 info "Installing gh"
-sudo apt install -y gh    # upgrades in place when the repo has something newer
+run sudo apt install -y gh    # upgrades in place when the repo has something newer
 
 # ==================================================================== git ===
 #
@@ -361,14 +397,16 @@ sudo apt install -y gh    # upgrades in place when the repo has something newer
 # Ubuntu Git Maintainers' own archive and tracks the latest release, and apt
 # keeps it current from then on.
 
-if ! ls /etc/apt/sources.list.d/ 2>/dev/null | grep -q git-core; then
+if apt_source_exists git-core/ppa; then
+  info "git-core PPA already configured - skipping"
+else
   info "Adding the git-core PPA"
-  sudo apt install -y software-properties-common    # provides add-apt-repository
-  sudo add-apt-repository -y ppa:git-core/ppa       # runs apt update itself
+  run sudo apt install -y software-properties-common    # provides add-apt-repository
+  run sudo add-apt-repository -y ppa:git-core/ppa       # runs apt update itself
 fi
 
 info "Installing git"
-sudo apt install -y git
+run sudo apt install -y git
 
 # git reads ~/.config/git/config natively, so this needs no extra wiring. It is
 # what points core.pager at delta.
@@ -394,7 +432,7 @@ export PATH="$HOME/.local/bin:$PATH"    # and for the rest of this run
 # --- claude code -----------------------------------------------------------
 
 info "Installing claude code"
-curl -fsSL https://claude.ai/install.sh | bash
+run bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
 
 # ~/.claude also holds sessions, history and projects, so link the two config
 # files rather than the directory - a directory link would hide all of that.
@@ -407,7 +445,7 @@ ln -sfn ~/dotfiles/claude/statusline.sh ~/.claude/statusline.sh
 # --- opencode --------------------------------------------------------------
 
 info "Installing opencode"
-curl -fsSL https://opencode.ai/install | bash
+run bash -c 'curl -fsSL https://opencode.ai/install | bash'
 
 # ~/.config/opencode also holds agents/, commands/, plugins/, themes/ and
 # tui.json, so link the config file only - same reasoning as ~/.claude.
@@ -418,7 +456,7 @@ ln -sfn ~/dotfiles/opencode/opencode.json ~/.config/opencode/opencode.json
 # --- herdr -----------------------------------------------------------------
 
 info "Installing herdr"
-curl -fsSL https://herdr.dev/install | bash
+run bash -c 'curl -fsSL https://herdr.dev/install | bash'
 
 # ~/.config/herdr also holds sockets, logs and session.json - link the config
 # file only, for the same reason as ~/.claude above.
@@ -426,4 +464,5 @@ mkdir -p ~/.config/herdr
 info "Linking ~/dotfiles/herdr/config.toml -> ~/.config/herdr/config.toml"
 ln -sfn ~/dotfiles/herdr/config.toml ~/.config/herdr/config.toml
 
-info "All done."
+trap - ERR
+info "All done. Full output: $LOG"
