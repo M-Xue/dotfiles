@@ -1,6 +1,9 @@
 ## editing
 Redo | <c-r>
 
+## tmux 
+Kill server (all sessions) | tmux kill-server
+
 ## tmux
 New session | tmux new
 
@@ -14,25 +17,43 @@ Attach to session | tmux a -t name
 Rename session | tmux rename-session -t oldname newname
 
 ## tmux
-Detach from session | <leader>d # From inside session
-
-## tmux
 Kill session | tmux kill-session -t name
 
-## tmux 
-Kill server (all sessions) | tmux kill-server
+## tmux
+From inside session: List sessions | <leader>L
 
 ## tmux
-New window | <leader>w
+From inside session: Rename session | <leader>R
+
+## tmux
+From inside session: New session | <leader>N
+
+## tmux
+From inside session: Kill session | <leader>X
+
+## tmux
+From inside session: Detach from session | <leader>d
+
+## tmux
+New window | <leader>n
 
 ## tmux
 List windows | <leader>l
+
+## tmux
+Rename window | <leader>r
 
 ## tmux
 Pick window | <leader>[0-9]
 
 ## tmux
 Previous window | <leader>p
+
+## tmux
+Move window to right (can be pressed multiple times after leader) | <leader>>"<"
+
+## tmux
+Move window to left (can be pressed multiple times after leader) | <leader>"<"
 
 ## tmux
 Kill window | <leader>Q
@@ -44,7 +65,7 @@ New vertical pane | <leader>v
 New horizontal pane | <leader>h
 
 ## tmux
-Move between panes | <leader>[hjkl]
+Move between panes | <leader>[arrow key]
 
 ## tmux
 Swap current pane with the previous one | <leader>{
