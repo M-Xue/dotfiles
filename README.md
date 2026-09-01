@@ -13,6 +13,8 @@ General
 - oh my zsh: advanced zsh configuration
 - tmux: terminal multiplexer that lets you manage multiple terminal sessions
 - gh: GitHub CLI (stacked PRs)
+- fzf: fuzzy finder for files, command history, git branches
+- jq: command-line tool for working with JSON
 
 TUI
 
@@ -53,8 +55,8 @@ Some of these tools require their configurations in specific paths relative to
 your root directory. The `install.sh` script will apply simlinks to all folders
 and files and place them in the correct location.
 
-**This requires the repo to be placed in the root repository because the script
-uses absolute paths.**
+The script resolves its own location, so the repo can live anywhere - the
+symlinks it creates point back to wherever you cloned it.
 
 The script will also install all the relevant programs using the package manager
 associated with your OS. Homebrew for MacOS. `sudo apt` for Ubuntu. Some
@@ -68,9 +70,7 @@ You can run `install.sh` again to get the latest versions or get any new tools.
 ### Future considered tools
 
 - fd: improved find
-- fzf: fuzzy finder for files, command history, git branches
 - tig: alternative git history browser, more minimal
-- jq: command-line tool for working with JSON
 
 ### In-built tools to learn (from Claude)
 
