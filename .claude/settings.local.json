@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/maxx/.config/**)",
+      "Read(//Users/maxx/.config/ghostty/**)",
+      "Bash(git -C /Users/maxx/.local/share/nvim/lazy/nvim-navic remote -v)",
+      "Bash(git -C /Users/maxx/.local/share/nvim/lazy/nvim-navic branch -a)",
+      "Bash(git -C /Users/maxx/.local/share/nvim/lazy/nvim-navic fetch origin master --quiet)",
+      "Bash(git -C /Users/maxx/.local/share/nvim/lazy/nvim-navic log --oneline HEAD..origin/master -- lua/nvim-navic/init.lua)",
+      "Bash(nvim --version)",
+      "Bash(nvim --headless -c \"edit README.md\" -c \"sleep 500m\" -c \"messages\" -c \"qa!\")",
+      "Bash(nvim --headless -c \"lua print\\(vim.inspect\\(vim.treesitter.language.get_lang\\('markdown'\\)\\)\\)\" -c \"lua local ok,parser = pcall\\(vim.treesitter.get_parser, 0, 'markdown'\\); print\\(ok, parser\\)\" -c \"qa!\")",
+      "Read(//Users/maxx/.local/share/nvim/lazy/nvim-treesitter/parser/**)",
+      "Bash(nvim --headless README.md -c \"sleep 300m\" -c \"lua print\\(vim.inspect\\(vim.lsp.get_clients\\({bufnr=0}\\)\\)\\)\" -c \"qa!\")",
+      "Read(//opt/homebrew/Cellar/neovim/**)",
+      "Read(//Users/maxx/.local/share/nvim/lazy/nvim-treesitter/**)",
+      "Bash(nvim --headless -c \"TSInstallSync markdown markdown_inline\" -c \"qa!\")",
+      "Bash(nvim *)",
+      "Bash(grep -n '```' README.md)",
+      "WebSearch",
+      "Bash(gh issue *)",
+      "WebFetch(domain:github.com)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(bash /Users/maxx/.claude/statusline-command.sh)",
+      "Bash(claude config *)",
+      "Bash(claude models *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(claude --version)",
+      "Bash(env)",
+      "Bash(grep -o \"statusline[^\\\\\"]\\\\{0,120\\\\}\" /Users/maxx/.claude/projects/-Users-maxx-dotfiles/26fa8292-43cd-4114-9572-74e8ab072ccd.jsonl)",
+      "Bash(timeout 120 claude --debug -p \"reply with just: ok\")",
+      "Bash(claude --debug -p \"reply with just: ok\")",
+      "Bash(rm -f /tmp/claude-statusline-debug.json)",
+      "Bash(cp /tmp/statusline-command.sh.bak ~/.claude/statusline-command.sh)",
+      "Read(//private/tmp/**)",
+      "Bash(grep -c '^---$' /tmp/claude-statusline-debug.log)",
+      "Bash(echo \"Captured $\\(grep -c '^---$' /tmp/claude-statusline-debug.log\\) samples\")",
+      "Bash(cp /tmp/statusline-command.sh.bak2 ~/.claude/statusline-command.sh)",
+      "Read(//dev/**)",
+      "Bash(COLUMNS=160 bash -c 'echo \"{\n  \\\\\"model\\\\\": {\\\\\"display_name\\\\\": \\\\\"Sonnet 5\\\\\"},\n  \\\\\"effort\\\\\": {\\\\\"level\\\\\": \\\\\"high\\\\\"},\n  \\\\\"context_window\\\\\": {\\\\\"remaining_percentage\\\\\": 42},\n  \\\\\"workspace\\\\\": {\\\\\"current_dir\\\\\": \\\\\"'\"$HOME\"'/dotfiles\\\\\"}\n}\" | bash ~/.claude/statusline-command.sh')"
+    ]
+  }
+}
