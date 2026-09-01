@@ -108,3 +108,6 @@ eval "$(zoxide init zsh)"
 
 # Force Opus 5 (1M context) — Canva org policy otherwise resets the default to Sonnet 5
 alias claude="claude --model 'opus[1m]'"
+
+# opencode
+export PATH=/Users/maxx/.opencode/bin:$PATH
