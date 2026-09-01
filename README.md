@@ -52,6 +52,29 @@ lazygit, zoxide, ripgrep, bat, jq, fzf, btop, eza, delta) are checked against
 the latest upstream release and replaced only if they are behind. gh and git are
 left to apt; claude code, opencode and herdr manage their own updates.
 
+ghostty is not installed on Ubuntu - there is no apt package for it.
+
+## Set up for Mac
+
+Clone this repo to `~/dotfiles` - `install_mac.sh` hardcodes that path - then run
+`./install_mac.sh`. It installs Homebrew if missing, then every tool listed
+above, and symlinks the configs into place.
+
+Run it again to update. Everything comes from Homebrew, so `brew outdated`
+decides what gets upgraded - there are no version checks of its own. claude
+code, opencode and herdr use their own installers and manage their own updates.
+
+## Zsh (not automated)
+
+Neither script sets up the shell itself: oh my zsh, its plugins
+(zsh-autosuggestions, zsh-syntax-highlighting, powerlevel10k) and `zsh/.zshrc`
+all have to be installed and linked by hand.
+
+They do append to `~/.bashrc` and `~/.zshrc` where those files already exist -
+PATH entries, `zoxide init` and fzf shell integration. If `~/.zshrc` is ever
+replaced by a symlink into this repo they warn instead of writing to it, so
+those lines then belong in `zsh/.zshrc` at the source.
+
 ## Misc
 
 ### Future considered tools
