@@ -52,11 +52,34 @@ return {
 						layout = "float",
 						hidden = true,
 
-						-- The list scrolls itself instead of letting Neovim do it, but it
-						-- reads scrolloff off the window once on open and then clamps it to
-						-- half the height. Anything large therefore means "always centred",
-						-- rather than letting the entry sit on the last visible row.
-						win = { list = { wo = { scrolloff = 999 } } },
+						-- Opening the explorer reveals the current file with `list:view(idx)`,
+						-- which scrolls only far enough to bring it onto the last visible row.
+						-- Centring it reads better, but snacks has no "just this once" knob: it
+						-- reads scrolloff off the window on open and applies it to every move
+						-- after that, so a large value keeps the cursor pinned to the middle.
+						-- Supply the top ourselves for that one reveal instead, then hand the
+						-- method back to the class so j/k scroll normally.
+						on_show = function(picker)
+							local list = picker.list
+
+							-- The winbar (path line below) isn't in the winhighlight map snacks
+							-- builds for the list window, so it renders with the theme's bare
+							-- WinBar colors - editor background, not the float's. Map it to the
+							-- same group as the float body.
+							local wo = vim.wo[list.win.win]
+							wo.winhighlight = wo.winhighlight .. ",WinBar:SnacksPickerList,WinBarNC:SnacksPickerList"
+
+							local view = list.view
+							list.view = function(self, cursor, top, render)
+								-- Every other caller passes an explicit top; only the reveal
+								-- leaves it nil, so this cannot be spent on the wrong call.
+								if top == nil then
+									top = cursor - math.floor((self:height() - 1) / 2)
+									list.view = nil -- fall back to snacks.picker.list.view
+								end
+								return view(self, cursor, top, render)
+							end
+						end,
 
 						-- Path of whatever the cursor is on. The list window is minimal, so
 						-- its winbar is free for this. on_change fires on every cursor move,
