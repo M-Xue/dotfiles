@@ -75,7 +75,7 @@ brew_pkg() {
 # argument overrides the line used for zsh.
 # ensure_rc_line <line> [zsh line]
 ensure_rc_line() {
-  local bash_line="$1" zsh_line="${2:-$1}" rc line
+  local bash_line="$1" zsh_line="${2:-$1}" rc line target
 
   for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     [ -e "$rc" ] || continue      # that shell isn't set up on this machine
@@ -84,15 +84,27 @@ ensure_rc_line() {
       *.zshrc)  line="$zsh_line" ;;
     esac
 
-    if grep -qxF "$line" "$rc"; then
-      info "$rc already has: $line"
-    elif [ -L "$rc" ]; then
+    # Where the line is actually written. ~/.zshrc is normally a symlink to
+    # zsh/.zshrc in this repo, and appending to that would edit the repo and
+    # carry this machine's setup onto every other one. zsh/.zshrc sources
+    # ~/.zshrc.local as its last act for exactly this, so redirect there.
+    # ~/.bashrc has no such hook, so a symlinked one still only warns.
+    target="$rc"
+    if [ "$rc" = "$HOME/.zshrc" ] && [ -L "$rc" ]; then
+      target="$HOME/.zshrc.local"
+    fi
+
+    # Check both: a line already in the repo's zsh/.zshrc must not be
+    # duplicated into the local file alongside it.
+    if grep -qxF "$line" "$rc" || { [ -e "$target" ] && grep -qxF "$line" "$target"; }; then
+      info "$target already has: $line"
+    elif [ -L "$target" ]; then
       # Appending would edit the repo itself and show up as a tracked change.
-      warn "$rc is a symlink - add this line to it at the source:"
+      warn "$target is a symlink - add this line to it at the source:"
       warn "  $line"
     else
-      info "Adding to $rc: $line"
-      printf '\n%s\n' "$line" >> "$rc"
+      info "Adding to $target: $line"
+      printf '\n%s\n' "$line" >> "$target"
     fi
   done
 }
