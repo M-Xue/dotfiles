@@ -51,6 +51,25 @@ return {
 						auto_close = true,
 						layout = "float",
 						hidden = true,
+
+						-- The list scrolls itself instead of letting Neovim do it, but it
+						-- reads scrolloff off the window once on open and then clamps it to
+						-- half the height. Anything large therefore means "always centred",
+						-- rather than letting the entry sit on the last visible row.
+						win = { list = { wo = { scrolloff = 999 } } },
+
+						-- Path of whatever the cursor is on. The list window is minimal, so
+						-- its winbar is free for this. on_change fires on every cursor move,
+						-- with or without a preview window.
+						on_change = function(picker, item)
+							local list = picker.list
+							if not (list and list.win and list.win:valid()) then
+								return
+							end
+							local path = item and item.file and vim.fn.fnamemodify(item.file, ":~:.") or ""
+							-- % is a statusline escape; a path containing one would corrupt it.
+							vim.wo[list.win.win].winbar = path:gsub("%%", "%%%%")
+						end,
 					},
 
 					files = { hidden = true },
