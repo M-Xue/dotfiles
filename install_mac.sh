@@ -75,7 +75,7 @@ brew_pkg() {
 # argument overrides the line used for zsh.
 # ensure_rc_line <line> [zsh line]
 ensure_rc_line() {
-  local bash_line="$1" zsh_line="${2:-$1}" rc line
+  local bash_line="$1" zsh_line="${2:-$1}" rc line target
 
   for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     [ -e "$rc" ] || continue      # that shell isn't set up on this machine
@@ -84,15 +84,27 @@ ensure_rc_line() {
       *.zshrc)  line="$zsh_line" ;;
     esac
 
-    if grep -qxF "$line" "$rc"; then
-      info "$rc already has: $line"
-    elif [ -L "$rc" ]; then
+    # Where the line is actually written. ~/.zshrc is normally a symlink to
+    # zsh/.zshrc in this repo, and appending to that would edit the repo and
+    # carry this machine's setup onto every other one. zsh/.zshrc sources
+    # ~/.zshrc.local as its last act for exactly this, so redirect there.
+    # ~/.bashrc has no such hook, so a symlinked one still only warns.
+    target="$rc"
+    if [ "$rc" = "$HOME/.zshrc" ] && [ -L "$rc" ]; then
+      target="$HOME/.zshrc.local"
+    fi
+
+    # Check both: a line already in the repo's zsh/.zshrc must not be
+    # duplicated into the local file alongside it.
+    if grep -qxF "$line" "$rc" || { [ -e "$target" ] && grep -qxF "$line" "$target"; }; then
+      info "$target already has: $line"
+    elif [ -L "$target" ]; then
       # Appending would edit the repo itself and show up as a tracked change.
-      warn "$rc is a symlink - add this line to it at the source:"
+      warn "$target is a symlink - add this line to it at the source:"
       warn "  $line"
     else
-      info "Adding to $rc: $line"
-      printf '\n%s\n' "$line" >> "$rc"
+      info "Adding to $target: $line"
+      printf '\n%s\n' "$line" >> "$target"
     fi
   done
 }
@@ -261,34 +273,92 @@ ensure_rc_line 'export PATH="$HOME/.local/bin:$PATH"'
 
 export PATH="$HOME/.local/bin:$PATH"    # and for the rest of this run
 
+# Aliases. ensure_rc_line appends, which matters for more than tidiness: under
+# oh-my-zsh, theme-and-appearance.zsh defines its own `ls` and the git plugin
+# its own `g`, so an alias set before `source $ZSH/oh-my-zsh.sh` is silently
+# overwritten. Landing at the end of the file puts these after it.
+ensure_rc_line 'alias ls="ls -la"'
+ensure_rc_line 'alias g="git"'
+ensure_rc_line 'alias p="pnpm"'
+
 # --- claude code -----------------------------------------------------------
+#
+# claude code, opencode and herdr all update themselves. Re-running their
+# installers on a machine that already has them just re-downloads a version
+# they would have fetched on their own, so each one is installed only once.
 
-info "Installing claude code"
-run bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
+if have claude; then
+  info "claude code is already installed - skipping"
+else
+  info "Installing claude code"
+  run bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
+fi
 
-# ~/.claude also holds sessions, history and projects, so link the two config
-# files rather than the directory - a directory link would hide all of that.
+# Force Fable 5 - Canva org policy otherwise resets the default to Sonnet 5.
+# No [1m] suffix as on opus: Fable 5's context window is 1M by default.
+ensure_rc_line 'alias claude="claude --model fable"'
+
+# ~/.claude also holds sessions, history and projects, so the directory itself
+# cannot be linked - that would hide all of it.
 mkdir -p ~/.claude
-info "Linking ~/dotfiles/claude/settings.local.json -> ~/.claude/settings.local.json"
-ln -sfn ~/dotfiles/claude/settings.local.json ~/.claude/settings.local.json
+
+# statusline.sh is only ever read, so it can be a link.
 info "Linking ~/dotfiles/claude/statusline.sh -> ~/.claude/statusline.sh"
 ln -sfn ~/dotfiles/claude/statusline.sh ~/.claude/statusline.sh
 
+# settings.json cannot be linked, and is not kept in this repo at all. Claude
+# Code reads exactly one settings file per user, ~/.claude/settings.json -
+# settings.local.json is a *project*-level file, ignored at user level - and
+# other tooling writes to that same file (hooks, enabledPlugins). So set the
+# keys in place and leave everything else in there alone.
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+[ -s "$CLAUDE_SETTINGS" ] || echo '{}' > "$CLAUDE_SETTINGS"
+jq -e . "$CLAUDE_SETTINGS" >/dev/null 2>&1 ||
+  die "$CLAUDE_SETTINGS is not valid JSON. Fix or move it, then re-run."
+
+info "Setting Claude Code preferences in $CLAUDE_SETTINGS"
+claude_tmp="$(mktemp)"
+jq '
+    .model                    = "fable"
+  | .effortLevel              = "high"
+  | .theme                    = "auto"
+  | .permissions.defaultMode  = "auto"
+  | .statusLine               = { type: "command",
+                                  command: "bash \"$HOME/.claude/statusline.sh\"" }
+' "$CLAUDE_SETTINGS" > "$claude_tmp"
+mv "$claude_tmp" "$CLAUDE_SETTINGS"
+
+# Earlier versions of this script linked settings.local.json here. Claude Code
+# never read it; clear it away rather than leave a dangling link behind.
+if [ -L ~/.claude/settings.local.json ] &&
+   case "$(readlink ~/.claude/settings.local.json)" in "$HOME"/dotfiles/*) true ;; *) false ;; esac
+then
+  info "Removing stale ~/.claude/settings.local.json link"
+  rm -f ~/.claude/settings.local.json
+fi
+
 # --- opencode --------------------------------------------------------------
 
-info "Installing opencode"
-run bash -c 'curl -fsSL https://opencode.ai/install | bash'
+# opencode installs into ~/.opencode/bin, which nothing here adds to PATH, so
+# `have` alone would report a perfectly good install as missing.
+if have opencode || [ -x "$HOME/.opencode/bin/opencode" ]; then
+  info "opencode is already installed - skipping"
+else
+  info "Installing opencode"
+  run bash -c 'curl -fsSL https://opencode.ai/install | bash'
+fi
 
-# ~/.config/opencode also holds agents/, commands/, plugins/, themes/ and
-# tui.json, so link the config file only - same reasoning as ~/.claude.
-mkdir -p ~/.config/opencode
-info "Linking ~/dotfiles/opencode/opencode.json -> ~/.config/opencode/opencode.json"
-ln -sfn ~/dotfiles/opencode/opencode.json ~/.config/opencode/opencode.json
+# No config is linked: opencode reads ~/.config/opencode/opencode.jsonc, which
+# is not tracked here.
 
 # --- herdr -----------------------------------------------------------------
 
-info "Installing herdr"
-run bash -c 'curl -fsSL https://herdr.dev/install | bash'
+if have herdr; then
+  info "herdr is already installed - skipping"
+else
+  info "Installing herdr"
+  run bash -c 'curl -fsSL https://herdr.dev/install | bash'
+fi
 
 # ~/.config/herdr also holds sockets, logs and session.json - link the config
 # file only, for the same reason as ~/.claude above.

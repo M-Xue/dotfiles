@@ -7,7 +7,6 @@ fi
 
 
 ZSH_THEME="powerlevel10k/powerlevel10k"
-alias ls="ls --color"
 
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 
@@ -105,9 +104,19 @@ eval "$(zoxide init zsh)"
 
 
 
-
-# Force Opus 5 (1M context) — Canva org policy otherwise resets the default to Sonnet 5
-alias claude="claude --model 'opus[1m]'"
-
 # opencode
 export PATH=/Users/maxx/.opencode/bin:$PATH
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# BEGIN ANSIBLE MANAGED BLOCK FOR canva_git
+export PATH="$HOME/.local/share/canva-git/bin:$PATH"
+# END ANSIBLE MANAGED BLOCK FOR canva_git
+export PATH="$HOME/.local/share/taz/tools/bin:$PATH"
+
+# Machine-local settings, written by install_mac.sh / install_ubuntu.sh.
+# ~/.zshrc is a symlink to this file, so the installers cannot append to it
+# without editing the repo - they write here instead. Last in the file, so
+# these win over anything oh-my-zsh sets.
+[[ ! -f ~/.zshrc.local ]] || source ~/.zshrc.local

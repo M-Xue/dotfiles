@@ -4,6 +4,8 @@ vim.opt.expandtab = true
 vim.opt.linebreak = true
 vim.opt.pumheight = 15
 
+vim.opt.termguicolors = true
+
 vim.opt.signcolumn = "yes:1"
 
 vim.g.loaded_matchparen = 0
