@@ -480,7 +480,7 @@ export PATH="$HOME/.local/bin:$PATH"    # and for the rest of this run
 # oh-my-zsh, theme-and-appearance.zsh defines its own `ls` and the git plugin
 # its own `g`, so an alias set before `source $ZSH/oh-my-zsh.sh` is silently
 # overwritten. Landing at the end of the file puts these after it.
-ensure_rc_line 'alias ls="ls -la"'
+ensure_rc_line 'alias ls="ls -la --color=auto"'   # GNU ls color; BSD -G on macOS
 ensure_rc_line 'alias g="git"'
 ensure_rc_line 'alias p="pnpm"'
 
