@@ -209,6 +209,10 @@ brew_pkg fzf
 # Shell integration: Ctrl-R history, Ctrl-T files, Alt-C cd, ** completion.
 ensure_rc_line 'eval "$(fzf --bash)"' 'eval "$(fzf --zsh)"'
 
+# nf: fuzzy-find a file and open it in nvim. Same line for both shells; the
+# zsh copy lives in zsh/.zshrc, which the grep in ensure_rc_line finds.
+ensure_rc_line "nf() { local f; f=\$(fzf --preview 'bat --color=always --style=numbers {}') && nvim \"\$f\"; }"
+
 # =================================================================== btop ===
 
 brew_pkg btop
@@ -277,9 +281,14 @@ export PATH="$HOME/.local/bin:$PATH"    # and for the rest of this run
 # oh-my-zsh, theme-and-appearance.zsh defines its own `ls` and the git plugin
 # its own `g`, so an alias set before `source $ZSH/oh-my-zsh.sh` is silently
 # overwritten. Landing at the end of the file puts these after it.
-ensure_rc_line 'alias ls="ls -la"'
+ensure_rc_line 'alias ls="ls -laG"'   # -G is BSD ls color; GNU --color=auto on Ubuntu
 ensure_rc_line 'alias g="git"'
 ensure_rc_line 'alias p="pnpm"'
+
+# `git log` -> `git log --stat`. Has to be a shell function: git refuses to
+# let an [alias] shadow a builtin command, and zsh aliases cannot span two
+# words. `g log` also lands here, since `g` expands back to `git`.
+ensure_rc_line 'git() { if [[ $1 == log ]]; then command git log --stat "${@:2}"; else command git "$@"; fi }'
 
 # --- claude code -----------------------------------------------------------
 #

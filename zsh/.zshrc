@@ -104,6 +104,11 @@ eval "$(zoxide init zsh)"
 
 
 
+# Fuzzy-find a file and open it in nvim. Also appended to ~/.bashrc by the
+# install scripts - keep this line identical to the one they add, or
+# ensure_rc_line will duplicate it.
+nf() { local f; f=$(fzf --preview 'bat --color=always --style=numbers {}') && nvim "$f"; }
+
 # opencode
 export PATH=/Users/maxx/.opencode/bin:$PATH
 
