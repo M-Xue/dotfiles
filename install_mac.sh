@@ -285,6 +285,11 @@ ensure_rc_line 'alias ls="ls -la"'
 ensure_rc_line 'alias g="git"'
 ensure_rc_line 'alias p="pnpm"'
 
+# `git log` -> `git log --stat`. Has to be a shell function: git refuses to
+# let an [alias] shadow a builtin command, and zsh aliases cannot span two
+# words. `g log` also lands here, since `g` expands back to `git`.
+ensure_rc_line 'git() { if [[ $1 == log ]]; then command git log --stat "${@:2}"; else command git "$@"; fi }'
+
 # --- claude code -----------------------------------------------------------
 #
 # claude code, opencode and herdr all update themselves. Re-running their
