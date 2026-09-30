@@ -209,6 +209,10 @@ brew_pkg fzf
 # Shell integration: Ctrl-R history, Ctrl-T files, Alt-C cd, ** completion.
 ensure_rc_line 'eval "$(fzf --bash)"' 'eval "$(fzf --zsh)"'
 
+# nf: fuzzy-find a file and open it in nvim. Same line for both shells; the
+# zsh copy lives in zsh/.zshrc, which the grep in ensure_rc_line finds.
+ensure_rc_line "nf() { local f; f=\$(fzf --preview 'bat --color=always --style=numbers {}') && nvim \"\$f\"; }"
+
 # =================================================================== btop ===
 
 brew_pkg btop

@@ -339,6 +339,10 @@ fi
 # `fzf --bash` and `fzf --zsh` are 0.48+, so the apt build cannot do this.
 ensure_rc_line 'eval "$(fzf --bash)"' 'eval "$(fzf --zsh)"'
 
+# nf: fuzzy-find a file and open it in nvim. Same line for both shells; the
+# zsh copy lives in zsh/.zshrc, which the grep in ensure_rc_line finds.
+ensure_rc_line "nf() { local f; f=\$(fzf --preview 'bat --color=always --style=numbers {}') && nvim \"\$f\"; }"
+
 # =================================================================== btop ===
 #
 # The release tarball has no version in its name, so /latest/download/ works.
