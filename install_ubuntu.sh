@@ -618,5 +618,44 @@ mkdir -p ~/.config/herdr
 info "Linking ~/dotfiles/herdr/config.toml -> ~/.config/herdr/config.toml"
 ln -sfn ~/dotfiles/herdr/config.toml ~/.config/herdr/config.toml
 
+# ===================================================================== go ===
+#
+# Only here because branch (below) is built from source. Nothing else in this
+# repo needs Go. apt's Go is too old on both LTS releases - branch/go.mod asks
+# for a newer toolchain than either ships - so use the official tarball, which
+# is Go's own documented install method. go.dev publishes the current version
+# as plain text, so no GitHub API call is needed.
+
+GO_DIR=/usr/local/go
+GO_LATEST="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -1)"   # e.g. go1.27.0
+GO_LATEST="${GO_LATEST#go}"
+
+# Check the toolchain we manage rather than whatever `go` resolves to, so an
+# apt-installed copy elsewhere on PATH can't make this look up to date.
+if needs_install go "$(tool_version "$GO_DIR/bin/go" version)" "$GO_LATEST"; then
+  tmp="$(mktemp -d)"
+  run curl -fsSL -o "$tmp/go.tar.gz" "https://go.dev/dl/go${GO_LATEST}.linux-amd64.tar.gz"
+  # Unpacking over the old tree would leave files from the previous version
+  # behind, so clear it out first - this is what go.dev's instructions say too.
+  run sudo rm -rf "$GO_DIR"
+  run sudo tar -C /usr/local -xzf "$tmp/go.tar.gz"
+  rm -rf "$tmp"
+fi
+
+ensure_rc_line "export PATH=\"\$PATH:$GO_DIR/bin\""
+
+export PATH="$PATH:$GO_DIR/bin"    # and for the rest of this run
+
+# ================================================================= branch ===
+#
+# Interactive `git branch` switcher, kept in this repo under branch/. Its own
+# install.sh builds it with Go into ~/.local/bin, which the section above
+# already put on PATH - both for this run, so install.sh sees it and leaves
+# the rc files alone, and for future shells. There is no version to compare:
+# the source is this checkout, so every run rebuilds. The build takes seconds.
+
+info "Building and installing branch"
+run ~/dotfiles/branch/install.sh
+
 trap - ERR
 info "All done. Full output: $LOG"

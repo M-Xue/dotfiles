@@ -20,6 +20,7 @@ TUI
 
 - lazygit: interactive git tui
 - btop: resource monitor for processor, memory, disks, network and processes
+- branch: interactive git branch switcher (lives in this repo under `branch/`, built with Go)
 
 AI Agentic Tools
 
@@ -48,9 +49,10 @@ run `./install_ubuntu.sh`. It installs every tool listed above and symlinks the
 configs into the paths each tool expects.
 
 Run it again to update. Tools that do not update themselves (nvim, tmux,
-lazygit, zoxide, ripgrep, bat, jq, fzf, btop, eza, delta) are checked against
+lazygit, zoxide, ripgrep, bat, jq, fzf, btop, eza, delta, go) are checked against
 the latest upstream release and replaced only if they are behind. gh and git are
-left to apt; claude code, opencode and herdr manage their own updates.
+left to apt; claude code, opencode and herdr manage their own updates. branch is
+rebuilt from this checkout on every run.
 
 ghostty is not installed on Ubuntu - there is no apt package for it.
 
@@ -63,6 +65,7 @@ above, and symlinks the configs into place.
 Run it again to update. Everything comes from Homebrew, so `brew outdated`
 decides what gets upgraded - there are no version checks of its own. claude
 code, opencode and herdr use their own installers and manage their own updates.
+branch is rebuilt from this checkout on every run.
 
 ## Zsh (not automated)
 
