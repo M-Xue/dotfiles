@@ -406,5 +406,23 @@ mkdir -p ~/.config/herdr
 info "Linking ~/dotfiles/herdr/config.toml -> ~/.config/herdr/config.toml"
 ln -sfn ~/dotfiles/herdr/config.toml ~/.config/herdr/config.toml
 
+# ===================================================================== go ===
+#
+# Only here because branch (below) is built from source. Nothing else in this
+# repo needs Go.
+
+brew_pkg go
+
+# ================================================================= branch ===
+#
+# Interactive `git branch` switcher, kept in this repo under branch/. Its own
+# install.sh builds it with Go into ~/.local/bin, which the section above
+# already put on PATH - both for this run, so install.sh sees it and leaves
+# the rc files alone, and for future shells. There is no version to compare:
+# the source is this checkout, so every run rebuilds. The build takes seconds.
+
+info "Building and installing branch"
+run ~/dotfiles/branch/install.sh
+
 trap - ERR
 info "All done. Full output: $LOG"
