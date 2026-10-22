@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func loaded(names ...string) model {
@@ -137,5 +138,46 @@ func TestScrollingKeepsSelectionVisible(t *testing.T) {
 	m = key(m, tea.KeyTab) // wrap to first
 	if !strings.Contains(m.View(), "> "+"  "+names[0]+" ") {
 		t.Errorf("first item should be visible after wrapping:\n%s", m.View())
+	}
+}
+
+func TestFuzzyRanking(t *testing.T) {
+	m := loaded("prefix-stuff", "other", "feature/fix-login", "FIX-typo")
+	m = typeKeys(m, "fix")
+	got := make([]string, len(m.filtered))
+	for i, h := range m.filtered {
+		got[i] = h.Name
+	}
+	if len(got) != 3 || got[0] != "FIX-typo" || got[1] != "feature/fix-login" || got[2] != "prefix-stuff" {
+		t.Errorf("want word-start matches first and no \"other\", got %v", got)
+	}
+	// The selection deliberately stays on the branch it was on while it is
+	// still visible (see TestSelectionStableAcrossSearch), so ranking does not
+	// move it; it was on prefix-stuff, the first branch in git order.
+	if m.selected != "prefix-stuff" {
+		t.Errorf("selection should stay put while still visible, got %q", m.selected)
+	}
+
+	// Subsequence match: letters in order but not adjacent.
+	m = loaded("feature/fix-login", "main")
+	m = typeKeys(m, "flog")
+	if len(m.filtered) != 1 || m.filtered[0].Name != "feature/fix-login" {
+		t.Errorf("\"flog\" should fuzzy-match feature/fix-login only, got %v", m.filtered)
+	}
+	if !strings.Contains(m.View(), "feature/fix-login") {
+		t.Errorf("matched branch missing from view")
+	}
+}
+
+func TestHighlightSegments(t *testing.T) {
+	// Plain style so the output is inspectable: matched runs come out as one
+	// styled segment each, unmatched text untouched.
+	got := highlight("fix-login", []int{0, 1, 4}, lipgloss.NewStyle())
+	want := matchStyle.Render("fi") + "x-" + matchStyle.Render("l") + "ogin"
+	if got != want {
+		t.Errorf("highlight = %q, want %q", got, want)
+	}
+	if highlight("main", nil, lipgloss.NewStyle()) != "main" {
+		t.Errorf("no matches should render the name unchanged")
 	}
 }

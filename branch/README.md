@@ -20,7 +20,7 @@ branch
 
 | Key | Action |
 | --- | --- |
-| type | filter |
+| type | fuzzy filter, best match first |
 | Tab / ↓ | next (wraps) |
 | Shift-Tab / ↑ | previous (wraps) |
 | Enter | switch to branch |

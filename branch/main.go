@@ -2,8 +2,9 @@
 //
 // It lists local branches the same way `git branch` does (current branch
 // marked with "*" in green, branches checked out in another worktree marked
-// with "+" in cyan), lets you filter them with a search bar, and switches to
-// the selected branch when you press Enter.
+// with "+" in cyan), lets you fuzzy-filter them with a search bar (best match
+// first, matched characters underlined), and switches to the selected branch
+// when you press Enter.
 package main
 
 import (
@@ -17,6 +18,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/sahilm/fuzzy"
 )
 
 var (
@@ -28,6 +30,8 @@ var (
 	currentStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
 	worktreeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
 	errStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("1"))
+	// Applied on top of the row's own colour to the characters the query hit.
+	matchStyle = lipgloss.NewStyle().Bold(true).Underline(true)
 )
 
 // branch is one line of `git branch` output.
@@ -37,6 +41,19 @@ type branch struct {
 	Worktree bool // checked out in another worktree ("+")
 	Pseudo   bool // e.g. "(HEAD detached at abc123)"; not switchable
 }
+
+// hit is a branch that survived the filter, with the byte offsets in Name
+// that the query matched (empty when there is no query).
+type hit struct {
+	branch
+	matched []int
+}
+
+// branchSource lets fuzzy search over []branch without copying the names out.
+type branchSource []branch
+
+func (s branchSource) String(i int) string { return s[i].Name }
+func (s branchSource) Len() int            { return len(s) }
 
 type branchesMsg struct {
 	branches []branch
@@ -51,7 +68,7 @@ type switchedMsg struct {
 type model struct {
 	search   textinput.Model
 	all      []branch
-	filtered []branch
+	filtered []hit
 	selected string // name of the selected branch, "" when nothing is selected
 	offset   int    // first visible row, for scrolling long lists
 
@@ -216,12 +233,21 @@ func (m *model) move(delta int) {
 // applyFilter recomputes the visible branches from the search text, keeping
 // the selection on the same branch when it is still visible and otherwise
 // falling back to the first one.
+//
+// Matching is fuzzy: the query's characters must appear in the name in order,
+// not necessarily together, case-insensitively. Results are ranked best match
+// first - word starts, consecutive runs and short gaps score higher - with
+// ties kept in git's order. An empty query shows everything in git's order.
 func (m *model) applyFilter() {
-	query := strings.ToLower(m.search.Value())
+	query := m.search.Value()
 	m.filtered = m.filtered[:0:0]
-	for _, b := range m.all {
-		if strings.Contains(strings.ToLower(b.Name), query) {
-			m.filtered = append(m.filtered, b)
+	if query == "" {
+		for _, b := range m.all {
+			m.filtered = append(m.filtered, hit{branch: b})
+		}
+	} else {
+		for _, match := range fuzzy.FindFrom(query, branchSource(m.all)) {
+			m.filtered = append(m.filtered, hit{branch: m.all[match.Index], matched: match.MatchedIndexes})
 		}
 	}
 	if m.indexOf(m.selected) < 0 {
@@ -292,14 +318,14 @@ func (m model) View() string {
 			if br.Name == m.selected {
 				cursor = ">"
 			}
-			marker, name := " ", br.Name
+			marker, style := " ", lipgloss.NewStyle()
 			switch {
 			case br.Current:
-				marker, name = "*", currentStyle.Render(name)
+				marker, style = "*", currentStyle
 			case br.Worktree:
-				marker, name = "+", worktreeStyle.Render(name)
+				marker, style = "+", worktreeStyle
 			}
-			fmt.Fprintf(&b, "%s %s %s\n", cursor, marker, name)
+			fmt.Fprintf(&b, "%s %s %s\n", cursor, marker, highlight(br.Name, br.matched, style))
 		}
 	}
 
@@ -308,6 +334,34 @@ func (m model) View() string {
 		b.WriteString(errStyle.Render(m.errMsg))
 	}
 	return frameStyle.Render(strings.TrimRight(b.String(), "\n")) + "\n"
+}
+
+// highlight renders name in base, with the bytes at the matched offsets (sorted
+// ascending, as fuzzy returns them) additionally in matchStyle. Runs of
+// adjacent matches are rendered as one segment to keep the escape codes down.
+func highlight(name string, matched []int, base lipgloss.Style) string {
+	if len(matched) == 0 {
+		return base.Render(name)
+	}
+	hot := base.Inherit(matchStyle)
+	var out strings.Builder
+	pos := 0
+	for i := 0; i < len(matched); {
+		start := matched[i]
+		end := start + 1
+		for i++; i < len(matched) && matched[i] == end; i++ {
+			end++
+		}
+		if start > pos {
+			out.WriteString(base.Render(name[pos:start]))
+		}
+		out.WriteString(hot.Render(name[start:end]))
+		pos = end
+	}
+	if pos < len(name) {
+		out.WriteString(base.Render(name[pos:]))
+	}
+	return out.String()
 }
 
 func main() {
