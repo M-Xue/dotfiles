@@ -1,6 +1,11 @@
 local _util = require("_util")
 
 vim.keymap.set("n", "<leader>.", _util.print_attached_clients, { desc = "See attached clients" })
+-- <C-.> is not a legacy terminal key: Ghostty sends it via the kitty keyboard
+-- protocol, and tmux needs `extended-keys on` (see tmux/tmux.conf) to pass it through.
+vim.keymap.set("n", "<leader><C-.>", function()
+	_util.restart_lsp("tsc")
+end, { desc = "Restart TypeScript LSP (tsc)" })
 
 vim.keymap.set("v", "<leader>y", '"+y', { desc = "Copy to system clipboard" })
 vim.keymap.set("n", "<leader>`", ":wa<CR>:qa<CR>", { desc = "Quit NeoVim" })
