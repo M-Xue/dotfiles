@@ -29,7 +29,7 @@ return {
 			require("mason-lspconfig").setup({
 				ensure_installed = {
 					"lua_ls",
-					"ts_ls",
+					"tsc",
 					"gopls",
 					"pyright",
 					"rust_analyzer",
