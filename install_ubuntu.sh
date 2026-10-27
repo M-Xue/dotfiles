@@ -513,6 +513,9 @@ ensure_rc_line 'alias g="git"'
 # words. `g log` also lands here, since `g` expands back to `git`.
 ensure_rc_line 'git() { if [[ $1 == log ]]; then command git log --stat "${@:2}"; else command git "$@"; fi }'
 
+# --- lazygit ---
+ensure_rc_line 'alias lg="lazygit"'
+
 # --- pnpm ---
 ensure_rc_line 'alias p="pnpm"'
 ensure_rc_line 'alias dev="pnpm webpack-dev-server -e home -p prod"'
