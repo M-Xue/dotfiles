@@ -76,10 +76,10 @@ local ts_textobj_config = {
 	swap = {
 		enable = true,
 		swap_next = {
-			["<leader>a"] = "@parameter.inner",
+			["<leader>>"] = "@parameter.inner",
 		},
 		swap_previous = {
-			["<leader>A"] = "@parameter.inner",
+			["<leader><lt>"] = "@parameter.inner",
 		},
 	},
 }

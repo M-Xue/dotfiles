@@ -1,0 +1,101 @@
+-- Debugging: <leader>d
+-- nvim-dap is lazy loaded, so everything goes through functions that require() on use.
+
+local function dap()
+	return require("dap")
+end
+
+local function dapui()
+	return require("dapui")
+end
+
+local map = function(mode, lhs, rhs, desc)
+	vim.keymap.set(mode, lhs, rhs, { desc = desc })
+end
+
+-- Breakpoints
+map("n", "<leader>db", function()
+	dap().toggle_breakpoint()
+end, "Toggle breakpoint")
+map("n", "<leader>dB", function()
+	dap().set_breakpoint(vim.fn.input("Breakpoint condition: "))
+end, "Conditional breakpoint")
+map("n", "<leader>dL", function()
+	dap().set_breakpoint(nil, nil, vim.fn.input("Log point message: "))
+end, "Log point")
+map("n", "<leader>dx", function()
+	dap().clear_breakpoints()
+end, "Clear all breakpoints")
+map("n", "<leader>df", function()
+	dap().list_breakpoints()
+	vim.cmd("Trouble qflist open")
+end, "List breakpoints")
+
+-- Session
+map("n", "<leader>dc", function()
+	dap().continue()
+end, "Start / continue")
+map("n", "<leader>dl", function()
+	dap().run_last()
+end, "Run last configuration")
+map("n", "<leader>dR", function()
+	dap().restart()
+end, "Restart")
+map("n", "<leader>dq", function()
+	dap().terminate()
+	dapui().close()
+end, "Terminate")
+map("n", "<leader>dp", function()
+	dap().pause()
+end, "Pause")
+
+-- Stepping
+map("n", "<leader>dO", function()
+	dap().step_over()
+end, "Step over")
+map("n", "<leader>di", function()
+	dap().step_into()
+end, "Step into")
+map("n", "<leader>do", function()
+	dap().step_out()
+end, "Step out")
+map("n", "<leader>dC", function()
+	dap().run_to_cursor()
+end, "Run to cursor")
+map("n", "<leader>dg", function()
+	dap().goto_()
+end, "Jump execution to cursor (no execute)")
+map("n", "<leader>dj", function()
+	dap().down()
+end, "Stack frame down")
+map("n", "<leader>dk", function()
+	dap().up()
+end, "Stack frame up")
+
+-- Inspecting
+map("n", "<leader>du", function()
+	dapui().toggle()
+end, "Toggle debug UI")
+map({ "n", "v" }, "<leader>de", function()
+	dapui().eval()
+end, "Evaluate expression")
+map("n", "<leader>dh", function()
+	require("dap.ui.widgets").hover()
+end, "Hover variable")
+map("n", "<leader>ds", function()
+	local widgets = require("dap.ui.widgets")
+	widgets.centered_float(widgets.scopes)
+end, "Scopes (float)")
+map("n", "<leader>dr", function()
+	dap().repl.toggle()
+end, "Toggle REPL")
+
+-- Go (nvim-dap-go). For debugging a Go test from its neotest position use <leader>ad.
+map("n", "<leader>dt", function()
+	dap() -- loads nvim-dap-go as a dependency
+	require("dap-go").debug_test()
+end, "Debug nearest Go test")
+map("n", "<leader>dT", function()
+	dap()
+	require("dap-go").debug_last_test()
+end, "Debug last Go test")
