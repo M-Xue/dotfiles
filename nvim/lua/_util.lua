@@ -82,6 +82,33 @@ M.print_attached_clients = function()
 	vim.print(language_servers)
 end
 
+--- Force-restart an LSP server by config name: disable it, kill every running
+--- client with that name, then re-enable it so it reattaches to the open buffers.
+--- Mirrors `:LspRestart! <name>` from nvim-lspconfig but reports what happened.
+--- @param name string server name as known to vim.lsp.config (e.g. "tsc")
+M.restart_lsp = function(name)
+	if vim.lsp.config[name] == nil then
+		vim.notify("No LSP config named '" .. name .. "'", vim.log.levels.ERROR, { title = "LSP" })
+		return
+	end
+
+	local clients = vim.lsp.get_clients({ name = name })
+	vim.lsp.enable(name, false)
+	for _, client in ipairs(clients) do
+		client:stop(true)
+	end
+
+	-- Give the process a moment to die before starting a fresh one.
+	vim.defer_fn(function()
+		vim.lsp.enable(name)
+		vim.notify(
+			("Restarted %s (%d client%s killed)"):format(name, #clients, #clients == 1 and "" or "s"),
+			vim.log.levels.INFO,
+			{ title = "LSP" }
+		)
+	end, 500)
+end
+
 --- @alias OperatingSystem
 ---| 'windows'
 ---| 'mac'
