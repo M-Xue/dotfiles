@@ -2,12 +2,12 @@
 //
 // It lists local branches the same way `git branch` does (current branch
 // marked with "*" in green, branches checked out in another worktree marked
-// with "+" in cyan), lets you filter them with a search bar, and switches to
-// the selected branch when you press Enter.
+// with "+" in cyan), lets you filter them with a search bar, and when you press
+// Enter leaves the TUI and runs `git switch` on the selected branch in your
+// terminal, so you see exactly what git normally prints.
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -27,7 +27,6 @@ var (
 	// Same ANSI colours `git branch` uses: green for current, cyan for worktree.
 	currentStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
 	worktreeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
-	errStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("1"))
 )
 
 // branch is one line of `git branch` output.
@@ -43,11 +42,6 @@ type branchesMsg struct {
 	err      error
 }
 
-type switchedMsg struct {
-	output string
-	err    error
-}
-
 type model struct {
 	search   textinput.Model
 	all      []branch
@@ -55,14 +49,12 @@ type model struct {
 	selected string // name of the selected branch, "" when nothing is selected
 	offset   int    // first visible row, for scrolling long lists
 
-	loading   bool
-	switching bool
-	quitting  bool
-	errMsg    string // non-fatal error shown under the list
-	fatal     error  // fatal error reported after the program exits
-	output    string // git's output after a successful switch
-	width     int
-	height    int
+	loading  bool
+	quitting bool
+	fatal    error  // fatal error reported after the program exits
+	target   string // branch to `git switch` to once the TUI has exited
+	width    int
+	height   int
 }
 
 const searchLabel = "Search: "
@@ -108,17 +100,6 @@ func parseBranches(out string) []branch {
 	return branches
 }
 
-func switchBranch(name string) tea.Cmd {
-	return func() tea.Msg {
-		var buf bytes.Buffer
-		cmd := exec.Command("git", "switch", name)
-		cmd.Stdout = &buf
-		cmd.Stderr = &buf
-		err := cmd.Run()
-		return switchedMsg{output: strings.TrimSpace(buf.String()), err: err}
-	}
-}
-
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -138,21 +119,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.applyFilter()
 		return m, nil
 
-	case switchedMsg:
-		m.switching = false
-		if msg.err != nil {
-			m.errMsg = msg.output
-			if m.errMsg == "" {
-				m.errMsg = msg.err.Error()
-			}
-			return m, nil
-		}
-		m.output = msg.output
-		m.quitting = true
-		return m, tea.Quit
-
 	case tea.KeyMsg:
-		m.errMsg = ""
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			m.quitting = true
@@ -177,24 +144,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// enter switches to the selected branch, if that makes sense.
+// enter picks the selected branch and quits the TUI; main then runs
+// `git switch` in the terminal. The current branch is not special-cased so
+// git gets to print its usual "Already on '...'" message.
 func (m *model) enter() tea.Cmd {
 	i := m.indexOf(m.selected)
-	if m.loading || m.switching || i < 0 {
+	if m.loading || i < 0 || m.filtered[i].Pseudo {
 		return nil
 	}
-	b := m.filtered[i]
-	if b.Pseudo {
-		return nil
-	}
-	if b.Current {
-		// Nothing to do; behave like `git switch` would and just report it.
-		m.output = fmt.Sprintf("Already on '%s'", b.Name)
-		m.quitting = true
-		return tea.Quit
-	}
-	m.switching = true
-	return switchBranch(b.Name)
+	m.target = m.filtered[i].Name
+	m.quitting = true
+	return tea.Quit
 }
 
 // move shifts the selection by delta, wrapping at both ends.
@@ -250,8 +210,8 @@ func (m *model) listRows() int {
 	if m.height == 0 {
 		return 20 // no size known yet
 	}
-	// top padding, search bar, blank line, and one line kept for error messages
-	return max(1, m.height-5)
+	// top padding, search bar, blank line, and the trailing newline
+	return max(1, m.height-4)
 }
 
 func (m *model) ensureVisible() {
@@ -303,10 +263,6 @@ func (m model) View() string {
 		}
 	}
 
-	if m.errMsg != "" {
-		b.WriteString("\n")
-		b.WriteString(errStyle.Render(m.errMsg))
-	}
 	return frameStyle.Render(strings.TrimRight(b.String(), "\n")) + "\n"
 }
 
@@ -321,8 +277,19 @@ func main() {
 		fmt.Fprintln(os.Stderr, m.fatal)
 		os.Exit(1)
 	}
-	if m.output != "" {
-		// git prints "Switched to branch '...'" on stderr; do the same.
-		fmt.Fprintln(os.Stderr, m.output)
+	if m.target == "" {
+		return
+	}
+	// The TUI has restored the terminal, so run git attached to it exactly as
+	// if typed at the prompt: same output, same colours, same exit status.
+	cmd := exec.Command("git", "switch", m.target)
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+	if err := cmd.Run(); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			os.Exit(exitErr.ExitCode())
+		}
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
