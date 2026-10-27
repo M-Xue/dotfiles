@@ -11,7 +11,15 @@ NeoVim sucks dont use it ive wasted so much time im in despair
 - LazyGit
 
 ### Go 
-- Delve
+- Go toolchain (`go`)
+- Delve and gotestsum are installed by mason (`delve`, `gotestsum`)
+
+### JavaScript / TypeScript
+- Node (vscode-js-debug is installed by mason as `js-debug-adapter`)
+- Jest, Vitest or Playwright in the project being tested. The neotest adapters run the project's own
+  `node_modules/.bin/{jest,vitest,playwright}`. Which adapter owns a file is decided in
+  `lua/plugins/neotest/paths.lua`: files under `e2e/`, `e2e-tests/`, `playwright/` or `__e2e__/` go to
+  playwright, everything else to vitest (if the package depends on vitest) or jest.
 
 ### Rust 
 - Rust 
@@ -28,7 +36,8 @@ This includes:
 - LSP 
     - This is for diagnostics, like errors and warnings, as well as autocomplete and allowing you to jump around your project to see where functions are called etc.
     - This works in tandem with cmp.nvim which is just what handles the autocomplete. There is also another plugin called LuaSnips and this feeds cmp.nvim snippets (LSP only provides basic autocomplete)
-- Debugger (dap)
+- Debugger (nvim-dap + nvim-dap-ui, `<leader>d`)
+- Test runner (neotest with jest, vitest, playwright and go adapters, `<leader>a`)
 - Fuzzy finder (telescope)
 - Syntax highlighting and analysis (treesitter)
     - This just provides better syntax highlighting over NeoVim's default capability and also lets you jump around the syntax tree (e.g., go to the next function or for loop etc)

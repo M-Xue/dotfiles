@@ -23,6 +23,9 @@ local plugins = {
 	require("plugins.formatter"),
 	require("plugins.linter"),
 
+	require("plugins.dap"),
+	require("plugins.neotest"),
+
 	require("plugins.terminal"),
 
 	require("plugins.trouble"),

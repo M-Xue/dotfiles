@@ -68,6 +68,13 @@ return {
 					"markdownlint-cli2",
 					"stylelint",
 					"golangci-lint",
+
+					-- Debug adapters
+					"js-debug-adapter",
+					"delve",
+
+					-- Test runners
+					"gotestsum",
 				},
 				auto_update = true,
 				run_on_start = true,
