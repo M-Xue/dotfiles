@@ -125,3 +125,5 @@ export PATH="$HOME/.local/share/taz/tools/bin:$PATH"
 # without editing the repo - they write here instead. Last in the file, so
 # these win over anything oh-my-zsh sets.
 [[ ! -f ~/.zshrc.local ]] || source ~/.zshrc.local
+
+[ -f "/Users/maxx/.local/share/grove/init.sh" ] && . "/Users/maxx/.local/share/grove/init.sh"

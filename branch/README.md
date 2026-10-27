@@ -23,7 +23,7 @@ branch
 | type | filter |
 | Tab / ↓ | next (wraps) |
 | Shift-Tab / ↑ | previous (wraps) |
-| Enter | switch to branch |
+| Enter | quit and run `git switch` on the branch, printing git's usual output |
 | Esc | quit |
 
 `*` green = current branch, `+` cyan = checked out in another worktree.

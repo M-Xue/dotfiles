@@ -104,14 +104,26 @@ func TestSelectionStableAcrossSearch(t *testing.T) {
 	}
 }
 
-func TestEnterOnCurrentAndPseudo(t *testing.T) {
+func TestEnterQuitsWithTarget(t *testing.T) {
 	m := newModel()
 	next, _ := m.Update(branchesMsg{branches: parseBranches("*\tmain\t\n \tdev\t\n")})
 	m = next.(model)
+	// Enter on the current branch still hands over to git, which reports
+	// "Already on 'main'" itself.
 	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m = next.(model)
-	if cmd == nil || !m.quitting || m.output != "Already on 'main'" {
-		t.Errorf("enter on current branch should quit with notice, got %+v", m)
+	if cmd == nil || !m.quitting || m.target != "main" {
+		t.Errorf("enter on current branch should quit with target main, got %+v", m)
+	}
+
+	m = key(loaded("main", "dev"), tea.KeyTab)
+	next, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = next.(model)
+	if cmd == nil || !m.quitting || m.target != "dev" {
+		t.Errorf("enter should quit with target dev, got %+v", m)
+	}
+	if m.View() != "" {
+		t.Errorf("view should be blank once quitting, got %q", m.View())
 	}
 
 	m = newModel()
