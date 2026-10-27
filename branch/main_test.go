@@ -51,6 +51,40 @@ func TestParseBranches(t *testing.T) {
 	}
 }
 
+func TestRecencyOrder(t *testing.T) {
+	reflog := strings.Join([]string{
+		"commit: tweak",
+		"checkout: moving from feature to main",
+		"checkout: moving from old to feature",
+		"checkout: moving from main to abc1234", // detached; ignored below
+		"checkout: moving from feature to old",
+	}, "\n")
+	order := checkoutOrder(reflog)
+	if order["main"] != 0 || order["feature"] != 1 || order["old"] != 2 {
+		t.Errorf("unexpected order: %v", order)
+	}
+
+	// git's order is alphabetical; "never" has no reflog entry; "feature" is
+	// current in this worktree and so comes first regardless.
+	bs := parseBranches(" \tabc1234\t\n*\tfeature\t\n \tmain\t\n \tnever\t\n \told\t\n")
+	sortByRecency(bs, order)
+	got := make([]string, len(bs))
+	for i, b := range bs {
+		got[i] = b.Name
+	}
+	want := "feature main old abc1234 never"
+	if strings.Join(got, " ") != want {
+		t.Errorf("sorted = %q, want %q", strings.Join(got, " "), want)
+	}
+
+	// No reflog at all leaves git's order alone.
+	bs = parseBranches(" \tb\t\n \ta\t\n")
+	sortByRecency(bs, checkoutOrder(""))
+	if bs[0].Name != "b" || bs[1].Name != "a" {
+		t.Errorf("empty reflog should keep order, got %v", bs)
+	}
+}
+
 func TestLoadingAndEmpty(t *testing.T) {
 	m := newModel()
 	if !strings.Contains(m.View(), "Loading branches...") {
@@ -112,15 +146,15 @@ func TestEnterQuitsWithTarget(t *testing.T) {
 	// "Already on 'main'" itself.
 	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m = next.(model)
-	if cmd == nil || !m.quitting || m.target != "main" {
-		t.Errorf("enter on current branch should quit with target main, got %+v", m)
+	if cmd == nil || !m.quitting || strings.Join(m.gitArgs, " ") != "switch main" {
+		t.Errorf("enter on current branch should quit with `switch main`, got %+v", m)
 	}
 
 	m = key(loaded("main", "dev"), tea.KeyTab)
 	next, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m = next.(model)
-	if cmd == nil || !m.quitting || m.target != "dev" {
-		t.Errorf("enter should quit with target dev, got %+v", m)
+	if cmd == nil || !m.quitting || strings.Join(m.gitArgs, " ") != "switch dev" {
+		t.Errorf("enter should quit with `switch dev`, got %+v", m)
 	}
 	if m.View() != "" {
 		t.Errorf("view should be blank once quitting, got %q", m.View())
@@ -132,6 +166,60 @@ func TestEnterQuitsWithTarget(t *testing.T) {
 	_, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	if cmd != nil {
 		t.Errorf("enter on detached HEAD entry should do nothing")
+	}
+}
+
+func TestFuzzyFilterRanksBestFirst(t *testing.T) {
+	m := loaded("main", "feature/login-page", "fix/login", "release")
+	m = typeKeys(m, "lgn")
+	got := make([]string, len(m.filtered))
+	for i, b := range m.filtered {
+		got[i] = b.Name
+	}
+	want := "fix/login feature/login-page"
+	if strings.Join(got, " ") != want {
+		t.Errorf("fuzzy results = %q, want %q", strings.Join(got, " "), want)
+	}
+	if m.selected != "fix/login" {
+		t.Errorf("selection should land on best match, got %q", m.selected)
+	}
+	if len(m.filtered[0].matched) != 3 {
+		t.Errorf("expected 3 matched offsets, got %v", m.filtered[0].matched)
+	}
+	m = typeKeys(m, "zz")
+	if len(m.filtered) != 0 {
+		t.Errorf("non-matching query should empty the list, got %v", m.filtered)
+	}
+	m = key(m, tea.KeyCtrlU) // clear search
+	if len(m.filtered) != 4 || m.filtered[0].Name != "main" {
+		t.Errorf("empty query should restore git order, got %v", m.filtered)
+	}
+}
+
+func TestDeleteKeys(t *testing.T) {
+	base := key(loaded("main", "dev"), tea.KeyTab) // dev
+
+	m := key(base, tea.KeyCtrlD)
+	if !m.quitting || strings.Join(m.gitArgs, " ") != "branch -d dev" {
+		t.Errorf("ctrl-d should quit with `branch -d dev`, got %+v", m)
+	}
+
+	m = typeKeys(base, "D")
+	if !m.quitting || strings.Join(m.gitArgs, " ") != "branch -D dev" {
+		t.Errorf("shift-d should quit with `branch -D dev`, got %+v", m)
+	}
+
+	// Lowercase d is ordinary search input.
+	m = typeKeys(base, "d")
+	if m.quitting || m.gitArgs != nil || m.search.Value() != "d" {
+		t.Errorf("lowercase d should only filter, got %+v", m)
+	}
+
+	// Pasted text containing D is search input too.
+	next, _ := base.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("D"), Paste: true})
+	m = next.(model)
+	if m.quitting || m.search.Value() != "D" {
+		t.Errorf("pasted D should only filter, got %+v", m)
 	}
 }
 

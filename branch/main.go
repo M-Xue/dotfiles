@@ -1,10 +1,11 @@
 // Command branch is an interactive local-branch switcher for git.
 //
-// It lists local branches the same way `git branch` does (current branch
-// marked with "*" in green, branches checked out in another worktree marked
-// with "+" in cyan), lets you filter them with a search bar, and when you press
+// It lists local branches most recently checked out first (taken from HEAD's
+// reflog), marked the same way `git branch` does (current branch "*" in green,
+// branches checked out in another worktree "+" in cyan), lets you fuzzy-filter them with a search bar, and when you press
 // Enter leaves the TUI and runs `git switch` on the selected branch in your
-// terminal, so you see exactly what git normally prints.
+// terminal, so you see exactly what git normally prints. Ctrl-D and Shift-D do
+// the same with `git branch -d` and `git branch -D`.
 package main
 
 import (
@@ -12,11 +13,14 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/sahilm/fuzzy"
 )
 
 var (
@@ -27,6 +31,7 @@ var (
 	// Same ANSI colours `git branch` uses: green for current, cyan for worktree.
 	currentStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
 	worktreeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
+	plainStyle    = lipgloss.NewStyle()
 )
 
 // branch is one line of `git branch` output.
@@ -35,6 +40,10 @@ type branch struct {
 	Current  bool // checked out in this worktree ("*")
 	Worktree bool // checked out in another worktree ("+")
 	Pseudo   bool // e.g. "(HEAD detached at abc123)"; not switchable
+
+	// Byte offsets in Name of the characters the search matched, for
+	// highlighting. Empty when there is no search text.
+	matched []int
 }
 
 type branchesMsg struct {
@@ -51,8 +60,8 @@ type model struct {
 
 	loading  bool
 	quitting bool
-	fatal    error  // fatal error reported after the program exits
-	target   string // branch to `git switch` to once the TUI has exited
+	fatal    error    // fatal error reported after the program exits
+	gitArgs  []string // git command to run once the TUI has exited, e.g. "switch", "main"
 	width    int
 	height   int
 }
@@ -71,7 +80,8 @@ func (m model) Init() tea.Cmd {
 	return tea.Batch(textinput.Blink, loadBranches)
 }
 
-// loadBranches asks git for the local branches, in git's own order.
+// loadBranches asks git for the local branches and orders them by most
+// recent checkout.
 func loadBranches() tea.Msg {
 	out, err := exec.Command("git", "branch", "--no-color",
 		"--format=%(HEAD)%09%(refname:short)%09%(worktreepath)").Output()
@@ -82,7 +92,51 @@ func loadBranches() tea.Msg {
 		}
 		return branchesMsg{err: err}
 	}
-	return branchesMsg{branches: parseBranches(string(out))}
+	branches := parseBranches(string(out))
+	// The reflog is best-effort: without one, branches stay in git's order.
+	if log, err := exec.Command("git", "reflog", "show", "--format=%gs").Output(); err == nil {
+		sortByRecency(branches, checkoutOrder(string(log)))
+	}
+	return branchesMsg{branches: branches}
+}
+
+var checkoutRe = regexp.MustCompile(`^checkout: moving from (\S+) to (\S+)$`)
+
+// checkoutOrder reads HEAD's reflog (newest entry first) and returns, for
+// every branch name that appears in a checkout, how recently it was checked
+// out: 0 for the most recent, 1 for the next, and so on. The "from" side of
+// an entry counts too, since that branch was checked out just before.
+func checkoutOrder(reflog string) map[string]int {
+	order := map[string]int{}
+	for _, line := range strings.Split(reflog, "\n") {
+		m := checkoutRe.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		for _, name := range []string{m[2], m[1]} {
+			if _, seen := order[name]; !seen {
+				order[name] = len(order)
+			}
+		}
+	}
+	return order
+}
+
+// sortByRecency puts the current branch first, then the others by most
+// recent checkout, then branches never checked out in their existing order.
+func sortByRecency(branches []branch, order map[string]int) {
+	rank := func(b branch) int {
+		if b.Current {
+			return -1
+		}
+		if r, ok := order[b.Name]; ok {
+			return r
+		}
+		return len(order)
+	}
+	sort.SliceStable(branches, func(i, j int) bool {
+		return rank(branches[i]) < rank(branches[j])
+	})
 }
 
 func parseBranches(out string) []branch {
@@ -131,7 +185,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.move(-1)
 			return m, nil
 		case tea.KeyEnter:
-			return m, m.enter()
+			return m, m.run("switch")
+		case tea.KeyCtrlD:
+			return m, m.run("branch", "-d")
+		}
+		// Shift-D. Search is case-insensitive, so a capital D is never needed there.
+		if !msg.Paste && string(msg.Runes) == "D" {
+			return m, m.run("branch", "-D")
 		}
 		var cmd tea.Cmd
 		m.search, cmd = m.search.Update(msg)
@@ -144,15 +204,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// enter picks the selected branch and quits the TUI; main then runs
-// `git switch` in the terminal. The current branch is not special-cased so
-// git gets to print its usual "Already on '...'" message.
-func (m *model) enter() tea.Cmd {
+// run quits the TUI, arranging for main to run `git <args...> <branch>` on
+// the selected branch in the terminal. Nothing is validated here (current
+// branch, worktree branch, unmerged branch): git gets to print its own
+// messages, such as "Already on '...'" or "not fully merged".
+func (m *model) run(args ...string) tea.Cmd {
 	i := m.indexOf(m.selected)
 	if m.loading || i < 0 || m.filtered[i].Pseudo {
 		return nil
 	}
-	m.target = m.filtered[i].Name
+	m.gitArgs = append(args, m.filtered[i].Name)
 	m.quitting = true
 	return tea.Quit
 }
@@ -176,11 +237,26 @@ func (m *model) move(delta int) {
 // applyFilter recomputes the visible branches from the search text, keeping
 // the selection on the same branch when it is still visible and otherwise
 // falling back to the first one.
+//
+// With no search text the branches stay in recency order. Otherwise they are
+// fuzzy-matched (the typed characters must appear in order, not necessarily
+// adjacent) and sorted best match first, recency breaking ties.
 func (m *model) applyFilter() {
-	query := strings.ToLower(m.search.Value())
+	query := m.search.Value()
 	m.filtered = m.filtered[:0:0]
-	for _, b := range m.all {
-		if strings.Contains(strings.ToLower(b.Name), query) {
+	if query == "" {
+		for _, b := range m.all {
+			b.matched = nil
+			m.filtered = append(m.filtered, b)
+		}
+	} else {
+		names := make([]string, len(m.all))
+		for i, b := range m.all {
+			names[i] = b.Name
+		}
+		for _, match := range fuzzy.Find(query, names) {
+			b := m.all[match.Index]
+			b.matched = match.MatchedIndexes
 			m.filtered = append(m.filtered, b)
 		}
 	}
@@ -252,18 +328,38 @@ func (m model) View() string {
 			if br.Name == m.selected {
 				cursor = ">"
 			}
-			marker, name := " ", br.Name
+			marker, style := " ", plainStyle
 			switch {
 			case br.Current:
-				marker, name = "*", currentStyle.Render(name)
+				marker, style = "*", currentStyle
 			case br.Worktree:
-				marker, name = "+", worktreeStyle.Render(name)
+				marker, style = "+", worktreeStyle
 			}
-			fmt.Fprintf(&b, "%s %s %s\n", cursor, marker, name)
+			fmt.Fprintf(&b, "%s %s %s\n", cursor, marker, highlight(br.Name, br.matched, style))
 		}
 	}
 
 	return frameStyle.Render(strings.TrimRight(b.String(), "\n")) + "\n"
+}
+
+// highlight renders name in style, underlining the characters at the given
+// byte offsets (the ones the search matched).
+func highlight(name string, matched []int, style lipgloss.Style) string {
+	if len(matched) == 0 {
+		return style.Render(name)
+	}
+	hit := style.Underline(true).Bold(true)
+	var b strings.Builder
+	next := 0 // index into matched, which is sorted ascending
+	for i, r := range name {
+		if next < len(matched) && matched[next] == i {
+			b.WriteString(hit.Render(string(r)))
+			next++
+		} else {
+			b.WriteString(style.Render(string(r)))
+		}
+	}
+	return b.String()
 }
 
 func main() {
@@ -277,12 +373,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, m.fatal)
 		os.Exit(1)
 	}
-	if m.target == "" {
+	if len(m.gitArgs) == 0 {
 		return
 	}
 	// The TUI has restored the terminal, so run git attached to it exactly as
 	// if typed at the prompt: same output, same colours, same exit status.
-	cmd := exec.Command("git", "switch", m.target)
+	cmd := exec.Command("git", m.gitArgs...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		var exitErr *exec.ExitError
