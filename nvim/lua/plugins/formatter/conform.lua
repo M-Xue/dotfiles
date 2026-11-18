@@ -65,11 +65,11 @@ return {
 				},
 				log_level = vim.log.levels.ERROR,
 				notify_on_error = true,
-				format_on_save = {
-					lsp_fallback = true,
-					async = false,
-					timeout_ms = 500,
-				},
+				-- format_on_save = {
+				-- 	lsp_fallback = true,
+				-- 	async = false,
+				-- 	timeout_ms = 500,
+				-- },
 				--[[
 				--
 				--]]

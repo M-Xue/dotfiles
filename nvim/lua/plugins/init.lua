@@ -56,6 +56,10 @@ local plugins = {
 		"unblevable/quick-scope", -- Unqiue character highlight
 		event = "VeryLazy",
 	},
+	{
+		"Canva/dprint-vim-plugin", -- Unqiue character highlight
+		event = "VeryLazy",
+	},
 }
 
 require("lazy").setup(plugins)

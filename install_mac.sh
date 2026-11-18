@@ -411,8 +411,8 @@ ln -sfn ~/dotfiles/herdr/config.toml ~/.config/herdr/config.toml
 
 # ===================================================================== go ===
 #
-# Only here because branch (below) is built from source. Nothing else in this
-# repo needs Go.
+# Only here because branch, the agents skill selector and grove (all below)
+# are built from source. Nothing else in this repo needs Go.
 
 brew_pkg go
 
@@ -426,6 +426,70 @@ brew_pkg go
 
 info "Building and installing branch"
 run ~/dotfiles/branch/install.sh
+
+# ================================================================= agents ===
+#
+# Agent skills workspace: https://github.com/M-Xue/agents. It has to live at
+# ~/.agents, because ~/.agents/skills is the path coding agents read. An
+# existing checkout is left alone rather than pulled - it is worked in
+# directly, and may be on a branch or hold uncommitted changes.
+
+AGENTS_DIR="$HOME/.agents"
+
+if [ -d "$AGENTS_DIR/.git" ]; then
+  info "~/.agents is already cloned - leaving the checkout alone"
+else
+  info "Cloning agents into ~/.agents"
+  run git clone https://github.com/M-Xue/agents.git "$AGENTS_DIR"
+fi
+
+# Builds the `skills` selector into ~/.local/bin, then points
+# ~/.claude/skills at ~/.agents/skills and ~/.claude/CLAUDE.md at
+# ~/.agents/AGENTS.md. Anything already at those two paths is moved to
+# skills-old / CLAUDE.md-old, not deleted. Rebuilt on every run, like branch.
+info "Building and installing skills"
+run sh "$AGENTS_DIR/skill-selector-app/install.sh"
+
+# install_skill_libraries.sh resolves paths against the current directory, and
+# exits non-zero whenever its last clone is skipped - which is every re-run,
+# since the library is already there - so its status says nothing. Check for
+# the checkouts instead. GIT_TERMINAL_PROMPT=0 makes a private library fail
+# fast without credentials rather than hang on a prompt hidden in the log.
+#
+# update_skill_libraries.sh is deliberately not run: it hard-resets every
+# library, which would throw away uncommitted work in the ones edited locally.
+info "Cloning missing skill libraries"
+printf '\n$ install_skill_libraries.sh\n' >> "$LOG"
+(cd "$AGENTS_DIR" && GIT_TERMINAL_PROMPT=0 sh install_skill_libraries.sh) >> "$LOG" 2>&1 || true
+
+for library in $(grep -o 'skill-libraries/[A-Za-z0-9._-]*' "$AGENTS_DIR/install_skill_libraries.sh" | sort -u); do
+  [ -d "$AGENTS_DIR/$library/.git" ] ||
+    warn "$library was not cloned - see $LOG, then re-run ~/.agents/install_skill_libraries.sh from ~/.agents"
+done
+
+# ================================================================== grove ===
+#
+# Git worktree TUI: https://github.com/M-Xue/grove. Like ~/.agents, an
+# existing checkout is left alone rather than pulled, and the binary is
+# rebuilt from it on every run.
+
+GROVE_DIR="$HOME/Experiments/grove"
+
+if [ -d "$GROVE_DIR/.git" ]; then
+  info "grove is already cloned - leaving the checkout alone"
+else
+  info "Cloning grove into $GROVE_DIR"
+  run git clone https://github.com/M-Xue/grove.git "$GROVE_DIR"
+fi
+
+# Its installer builds into ~/.local/bin, rewrites the `cd` wrapper at
+# ~/.local/share/grove/init.sh, and appends a line sourcing that wrapper to
+# the rc file of $SHELL unless the exact line is already there. It does not go
+# through ensure_rc_line, so with ~/.zshrc linked into this repo the line
+# lands in zsh/.zshrc - where it is already committed for /Users/maxx. Under
+# any other home directory the first run adds a second, tracked line.
+info "Building and installing grove"
+run sh "$GROVE_DIR/scripts/install.sh"
 
 trap - ERR
 info "All done. Full output: $LOG"
