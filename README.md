@@ -21,6 +21,8 @@ TUI
 - lazygit: interactive git tui
 - btop: resource monitor for processor, memory, disks, network and processes
 - branch: interactive git branch switcher (lives in this repo under `branch/`, built with Go)
+- skills: selector for the agent skills exposed in `~/.agents/skills` (lives in [M-Xue/agents](https://github.com/M-Xue/agents), cloned to `~/.agents`, built with Go)
+- grove: git worktree browser (lives in [M-Xue/grove](https://github.com/M-Xue/grove), cloned to `~/Experiments/grove`, built with Go)
 
 AI Agentic Tools
 
@@ -54,6 +56,15 @@ the latest upstream release and replaced only if they are behind. gh and git are
 left to apt; claude code, opencode and herdr manage their own updates. branch is
 rebuilt from this checkout on every run.
 
+It also clones the agents workspace to `~/.agents` if it is not there, builds
+its `skills` selector, links `~/.claude/skills` and `~/.claude/CLAUDE.md` to it,
+and clones any missing skill libraries. Existing checkouts are never pulled or
+reset: update them with `git pull` in `~/.agents` and
+`./update_skill_libraries.sh` there.
+
+grove is cloned to `~/Experiments/grove` if it is not there and rebuilt from
+that checkout on every run; `git pull` there to update it.
+
 ghostty is not installed on Ubuntu - there is no apt package for it.
 
 ## Set up for Mac
@@ -66,6 +77,15 @@ Run it again to update. Everything comes from Homebrew, so `brew outdated`
 decides what gets upgraded - there are no version checks of its own. claude
 code, opencode and herdr use their own installers and manage their own updates.
 branch is rebuilt from this checkout on every run.
+
+It also clones the agents workspace to `~/.agents` if it is not there, builds
+its `skills` selector, links `~/.claude/skills` and `~/.claude/CLAUDE.md` to it,
+and clones any missing skill libraries. Existing checkouts are never pulled or
+reset: update them with `git pull` in `~/.agents` and
+`./update_skill_libraries.sh` there.
+
+grove is cloned to `~/Experiments/grove` if it is not there and rebuilt from
+that checkout on every run; `git pull` there to update it.
 
 ## Zsh (not automated)
 
